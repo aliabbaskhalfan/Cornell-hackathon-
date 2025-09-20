@@ -34,8 +34,15 @@ export default function HomePage() {
         <Card className="w-full max-w-2xl bg-neutral-800 border-neutral-700">
           <CardContent className="p-8 text-center">
             <div className="space-y-6">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle className="h-12 w-12 text-green-600" />
+              <div className="flex items-center justify-center space-x-4">
+                <img 
+                  src="/images/logo.png" 
+                  alt="CourtSide Logo" 
+                  className="h-16 w-auto object-contain logo-transparent"
+                />
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-12 w-12 text-green-600" />
+                </div>
               </div>
               
               <div className="space-y-2">
