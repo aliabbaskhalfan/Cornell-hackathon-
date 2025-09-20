@@ -123,8 +123,17 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
   const CurrentStepComponent = STEPS[currentStep].component;
 
   return (
-    <div className="min-h-screen bg-neutral-900">
+    <div className="min-h-screen bg-neutral-900 relative">
       <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Top Right Logo */}
+        <div className="absolute top-6 right-6">
+          <img 
+            src="/images/logo.png" 
+            alt="CourtSide Logo" 
+            className="h-12 w-auto object-contain"
+          />
+        </div>
+        
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-white mb-2">
