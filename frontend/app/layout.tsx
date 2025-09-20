@@ -7,7 +7,7 @@ import { SocketProvider } from '@/components/providers/socket-provider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'AI Sports Commentator',
+  title: 'Courtside',
   description: 'Real-time AI-powered sports commentary with customizable personas',
 }
 
