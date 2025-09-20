@@ -136,7 +136,8 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
             <img 
               src="/images/logo.png" 
               alt="Courtside Logo" 
-              className="h-60 w-auto object-contain"
+              className="w-auto object-contain"
+              style={{ height: '220px' }}
             />
           </h1>
           <p className="text-xl text-neutral-300">
