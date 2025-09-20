@@ -124,7 +124,7 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
   return (
     <div className="min-h-screen bg-neutral-900">
       {/* Fixed Logo - Top Left */}
-      <div className="fixed top-2 left-2 z-50">
+      <div className="fixed top-0 left-0 z-50">
         <img 
           src="/images/logo.png" 
           alt="CourtSide Logo" 
