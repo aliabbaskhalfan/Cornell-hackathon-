@@ -196,37 +196,10 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
             </CardContent>
           </Card>
 
-          {/* Features */}
-          <Card className="bg-neutral-800 border-neutral-700">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-white">Features</h3>
-                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
-                  <Edit3 className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-400">Live Q&A:</span>
-                  <Badge variant={data.liveQA ? "default" : "secondary"}>
-                    {data.liveQA ? "Enabled" : "Disabled"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-400">Background Audio:</span>
-                  <Badge variant={data.backgroundAudio ? "default" : "secondary"}>
-                    {data.backgroundAudio ? "Enabled" : "Disabled"}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Live Preview */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-semibold text-white">Live Preview</h2>
           
           <Card className="bg-neutral-800 border-neutral-700">
             <CardContent className="p-6">
@@ -275,6 +248,33 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
               </CardContent>
             </Card>
           )}
+
+          {/* Features */}
+          <Card className="bg-neutral-800 border-neutral-700">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-white">Features</h3>
+                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-400">Live Q&A:</span>
+                  <Badge variant={data.liveQA ? "default" : "secondary"}>
+                    {data.liveQA ? "Enabled" : "Disabled"}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-400">Background Audio:</span>
+                  <Badge variant={data.backgroundAudio ? "default" : "secondary"}>
+                    {data.backgroundAudio ? "Enabled" : "Disabled"}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
         </div>
       </div>
