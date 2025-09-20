@@ -276,20 +276,6 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
             </Card>
           )}
 
-          {/* Completion Message */}
-          <Card className="border-green-500 bg-green-900/20">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-3">
-                <CheckCircle className="h-8 w-8 text-green-400" />
-                <div>
-                  <h3 className="font-semibold text-green-300">Setup Complete!</h3>
-                  <p className="text-sm text-green-400">
-                    Your personalized Courtside commentator is ready to go. Click "Start Experience" to begin!
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 
