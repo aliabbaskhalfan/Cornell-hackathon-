@@ -199,7 +199,7 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
         </div>
 
         {/* Live Preview */}
-        <div className="space-y-6">
+        <div className="space-y-6 mt-24">
           
           <Card className="bg-neutral-800 border-neutral-700">
             <CardContent className="p-6">
