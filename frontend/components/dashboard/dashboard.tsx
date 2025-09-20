@@ -27,6 +27,15 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-neutral-900">
+      {/* Fixed Logo - Top Left */}
+      <div className="fixed -top-8 -left-8 z-50">
+        <img 
+          src="/images/logo.png" 
+          alt="CourtSide Logo" 
+          className="h-48 w-auto object-contain"
+        />
+      </div>
+
       {/* Game Header - Google Sports Style */}
       <GameHeader 
         homeTeam={gameData.homeTeam}

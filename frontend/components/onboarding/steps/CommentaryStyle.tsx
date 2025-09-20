@@ -53,15 +53,6 @@ export default function CommentaryStyle({ data, updateData, onNext, onPrevious, 
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
-      {/* Logo in top left */}
-      <div className="flex justify-start">
-        <img 
-          src="/images/logo.png" 
-          alt="CourtSide Logo" 
-          className="h-12 w-auto object-contain"
-        />
-      </div>
-      
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-bold text-white">Customize your commentator</h1>
         <p className="text-lg text-neutral-300">Adjust the personality and style of your Courtside commentator</p>

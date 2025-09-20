@@ -69,7 +69,7 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Column */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-semibold text-white">Your Settings</h2>
+          <h2 className="text-2xl font-semibold text-white">Team and Style</h2>
           
           {/* Team Selection */}
           <Card className="bg-neutral-800 border-neutral-700">

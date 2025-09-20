@@ -19,6 +19,15 @@ export function GameView({ gameId, onBack }: GameViewProps) {
 
   return (
     <div className="h-full flex flex-col">
+      {/* Fixed Logo - Top Left */}
+      <div className="fixed -top-8 -left-8 z-50">
+        <img 
+          src="/images/logo.png" 
+          alt="CourtSide Logo" 
+          className="h-48 w-auto object-contain"
+        />
+      </div>
+
       {/* Game Header */}
       <GameHeader gameId={gameId} onBack={onBack} />
       

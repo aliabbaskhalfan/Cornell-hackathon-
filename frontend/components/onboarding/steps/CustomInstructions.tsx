@@ -46,15 +46,6 @@ export default function CustomInstructions({ data, updateData, onNext, onPreviou
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
-      {/* Logo in top left */}
-      <div className="flex justify-start">
-        <img 
-          src="/images/logo.png" 
-          alt="CourtSide Logo" 
-          className="h-12 w-auto object-contain"
-        />
-      </div>
-      
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-bold text-white">Make it yours</h1>
         <p className="text-lg text-neutral-300">Add personal touches and enable features for your commentator</p>
