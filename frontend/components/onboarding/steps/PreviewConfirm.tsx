@@ -276,26 +276,6 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
             </CardContent>
           </Card>
 
-          {/* Completion Message */}
-          <Card className="border-green-500 bg-green-900/20">
-            <CardContent className="p-6 text-center">
-              <div className="flex flex-col items-center space-y-4">
-                <CheckCircle className="h-16 w-16 text-green-400" />
-                <h3 className="text-2xl font-bold text-green-300">Setup Complete!</h3>
-                <p className="text-lg text-green-400">
-                  Your personalized commentator is ready to go.
-                </p>
-                <div className="mt-4">
-                  <img 
-                    src="/images/logo.png" 
-                    alt="CourtSide Logo" 
-                    className="h-16 w-auto object-contain logo-transparent"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
         </div>
       </div>
 
