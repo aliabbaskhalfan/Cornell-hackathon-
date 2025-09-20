@@ -90,3 +90,19 @@
   width: 3px;
   height: 20px;
 }
+
+/* Logo background removal */
+.logo-transparent {
+  background: transparent !important;
+  background-color: transparent !important;
+  mix-blend-mode: screen;
+  filter: contrast(1.5) brightness(1.2);
+}
+
+/* Force remove black backgrounds from images */
+img[alt="CourtSide Logo"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  mix-blend-mode: screen;
+  filter: contrast(1.5) brightness(1.2);
+}
