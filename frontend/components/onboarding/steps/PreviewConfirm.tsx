@@ -69,11 +69,6 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-4xl font-bold text-white">Ready to go live!</h1>
-        <p className="text-lg text-neutral-300">Review your settings and start your personalized commentary experience</p>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Summary Card */}
         <div className="space-y-6">
@@ -195,6 +190,12 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
               </div>
             </CardContent>
           </Card>
+
+          {/* Ready to go live header */}
+          <div className="text-center space-y-2 pt-6">
+            <h1 className="text-4xl font-bold text-white">Ready to go live!</h1>
+            <p className="text-lg text-neutral-300">Review your settings and start your personalized commentary experience</p>
+          </div>
 
         </div>
 
