@@ -12,6 +12,28 @@ export default function HomePage() {
   const router = useRouter()
   const [isCompleted, setIsCompleted] = useState(false)
   const [completedData, setCompletedData] = useState<OnboardingData | null>(null)
+  const [countdown, setCountdown] = useState(5)
+
+  // Check if user has already completed onboarding on mount
+  useEffect(() => {
+    const hasCompleted = localStorage.getItem('onboarding-completed')
+    if (hasCompleted === 'true') {
+      // User has already completed onboarding, redirect to dashboard
+      router.push('/dashboard')
+    }
+  }, [router])
+
+  // Countdown timer for auto-redirect after completion
+  useEffect(() => {
+    if (isCompleted && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1)
+      }, 1000)
+      return () => clearTimeout(timer)
+    } else if (isCompleted && countdown === 0) {
+      router.push('/dashboard')
+    }
+  }, [isCompleted, countdown, router])
 
   const handleComplete = (data: OnboardingData) => {
     setCompletedData(data)
@@ -19,6 +41,10 @@ export default function HomePage() {
     
     // Clear the saved data from localStorage since onboarding is complete
     localStorage.removeItem('onboarding-data')
+    // Mark onboarding as completed
+    localStorage.setItem('onboarding-completed', 'true')
+    // Save user preferences
+    localStorage.setItem('user-preferences', JSON.stringify(data))
   };
 
   const handleSkip = () => {
@@ -44,6 +70,9 @@ export default function HomePage() {
                 </h1>
                 <p className="text-lg text-neutral-300">
                   Your personalized Courtside commentator is ready to go.
+                </p>
+                <p className="text-sm text-neutral-400">
+                  Redirecting to dashboard in {countdown} seconds...
                 </p>
               </div>
 
@@ -82,17 +111,18 @@ export default function HomePage() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
-                  onClick={handleSkip}
+                  onClick={() => router.push('/dashboard')}
                   className="px-8 py-3"
                 >
-                  Start Over
+                  <ArrowRight className="mr-2 h-4 w-4" />
+                  Enter Dashboard
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => window.location.reload()}
+                  onClick={handleSkip}
                   className="px-8 py-3 bg-black border-neutral-600 text-neutral-300 hover:bg-neutral-800"
                 >
-                  Refresh Page
+                  Start Over
                 </Button>
               </div>
             </div>
