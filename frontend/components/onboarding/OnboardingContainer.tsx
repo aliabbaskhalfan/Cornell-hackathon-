@@ -123,7 +123,20 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
 
   return (
     <div className="min-h-screen bg-neutral-900">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      {/* Fixed Header with Logo */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-neutral-900/95 backdrop-blur-sm border-b border-neutral-800">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center">
+            <img 
+              src="/images/logo.png" 
+              alt="CourtSide Logo" 
+              className="h-8 w-auto object-contain"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 py-8 pt-20">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-white mb-2">
