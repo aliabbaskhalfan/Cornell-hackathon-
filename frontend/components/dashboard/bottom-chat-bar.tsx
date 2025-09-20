@@ -28,6 +28,7 @@ export function BottomChatBar() {
   const [inputValue, setInputValue] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
   const [mounted, setMounted] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
@@ -35,6 +36,13 @@ export function BottomChatBar() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Auto-focus input when expanded
+  useEffect(() => {
+    if (isExpanded && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [isExpanded])
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -115,14 +123,15 @@ export function BottomChatBar() {
   return (
     <>
       {/* Styled Bottom Chat Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-4">
+      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-6">
         <div className="max-w-4xl mx-auto">
           {/* Main Search Bar Container */}
-          <div className="rounded-2xl bg-neutral-900 px-3 py-2 shadow-lg">
+          <div className="rounded-2xl bg-neutral-900 border border-neutral-600 px-3 py-2 shadow-lg">
             <div className="flex items-center space-x-2">
               {/* Input Section */}
               <div className="flex-1 px-4">
                 <Input
+                  ref={inputRef}
                   placeholder={isRecording ? "Listening..." : "Ask anything"}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
@@ -244,6 +253,49 @@ export function BottomChatBar() {
                 )}
               </div>
             </ScrollArea>
+            
+            {/* Input Area in Expanded Dialog */}
+            <div className="p-4 border-t border-neutral-700/30">
+              <div className="flex space-x-2">
+                <Button
+                  variant={isRecording ? "destructive" : "outline"}
+                  size="icon"
+                  onClick={toggleRecording}
+                  className={`${
+                    isRecording ? "animate-pulse" : ""
+                  } border-neutral-600 hover:bg-neutral-800`}
+                >
+                  {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </Button>
+                
+                <div className="flex-1">
+                  <Input
+                    ref={inputRef}
+                    placeholder={isRecording ? "Listening..." : "Ask anything"}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    disabled={isRecording || isLoading}
+                    className="bg-neutral-800 border-neutral-600 text-white placeholder:text-neutral-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                </div>
+                
+                <Button 
+                  onClick={handleSendMessage} 
+                  disabled={!inputValue.trim() || isLoading}
+                  className="bg-neutral-700 hover:bg-neutral-600 text-white border-neutral-600"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {isRecording && (
+                <div className="mt-2 flex items-center justify-center space-x-2 text-sm text-neutral-400">
+                  <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
+                  <span>Recording... Click mic to stop</span>
+                </div>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -1,20 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, Volume2, Edit3, CheckCircle } from 'lucide-react';
+import { Edit3 } from 'lucide-react';
 import { OnboardingStepProps } from '@/types/onboarding';
 
 export default function PreviewConfirm({ data, updateData, onNext, onPrevious, isFirstStep }: OnboardingStepProps) {
-  const [isPlayingPreview, setIsPlayingPreview] = useState(false);
-
-  const playPreview = () => {
-    setIsPlayingPreview(true);
-    // Simulate audio preview
-    setTimeout(() => setIsPlayingPreview(false), 3000);
-  };
 
   const getSliderLabel = (value: number, labels: [string, string]) => {
     const [left, right] = labels;
@@ -75,9 +67,9 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Summary Card */}
+        {/* Left Column */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-semibold text-white">Your Settings</h2>
+          <h2 className="text-2xl font-semibold text-white">Team and Style</h2>
           
           {/* Team Selection */}
           <Card className="bg-neutral-800 border-neutral-700">
@@ -164,7 +156,12 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
               </div>
             </CardContent>
           </Card>
+        </div>
 
+        {/* Right Column */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-semibold text-white">Additional Settings</h2>
+          
           {/* Voice Settings */}
           <Card className="bg-neutral-800 border-neutral-700">
             <CardContent className="p-6">
@@ -222,39 +219,6 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Live Preview */}
-        <div className="space-y-6">
-          <h2 className="text-2xl font-semibold text-white">Live Preview</h2>
-          
-          <Card className="bg-neutral-800 border-neutral-700">
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <h3 className="font-semibold text-white">Sample Commentary</h3>
-                <div className="bg-neutral-700 p-4 rounded-lg">
-                  <p className="text-neutral-300 italic mb-4">"{generateWelcomeMessage()}"</p>
-                  <Button
-                    onClick={playPreview}
-                    disabled={isPlayingPreview}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    {isPlayingPreview ? (
-                      <>
-                        <Volume2 className="h-4 w-4 mr-2 animate-pulse" />
-                        Playing Preview...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4 mr-2" />
-                        Play Full Preview
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Custom Instructions */}
           {data.customInstructions && (
@@ -275,21 +239,6 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
               </CardContent>
             </Card>
           )}
-
-          {/* Completion Message */}
-          <Card className="border-green-500 bg-green-900/20">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-3">
-                <CheckCircle className="h-8 w-8 text-green-400" />
-                <div>
-                  <h3 className="font-semibold text-green-300">Setup Complete!</h3>
-                  <p className="text-sm text-green-400">
-                    Your personalized Courtside commentator is ready to go. Click "Start Experience" to begin!
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 
