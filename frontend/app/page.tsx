@@ -47,38 +47,6 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="bg-neutral-700/50 p-6 rounded-lg text-left">
-                <h3 className="font-semibold mb-4 text-white">Your Settings Summary:</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-neutral-400">Favorite Team:</span>
-                    <span className="font-medium text-white">
-                      {completedData.favoriteTeam 
-                        ? `${completedData.favoriteTeam.city} ${completedData.favoriteTeam.name}`
-                        : 'Neutral Fan'
-                      }
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-400">Energy Level:</span>
-                    <span className="font-medium text-white">
-                      {completedData.energyLevel > 70 ? 'Hyped' : completedData.energyLevel < 30 ? 'Chill' : 'Balanced'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-400">Voice:</span>
-                    <span className="font-medium text-white">
-                      {completedData.voiceGender === 'male' ? 'Male' : completedData.voiceGender === 'female' ? 'Female' : 'No Preference'} - {completedData.accent}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-400">Live Q&A:</span>
-                    <span className="font-medium text-white">
-                      {completedData.liveQA ? 'Enabled' : 'Disabled'}
-                    </span>
-                  </div>
-                </div>
-              </div>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
