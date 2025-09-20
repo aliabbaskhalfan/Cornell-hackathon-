@@ -29,6 +29,15 @@ export default function TeamSelection({ data, updateData, onNext, onPrevious, is
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
+      {/* Logo in top left */}
+      <div className="flex justify-start">
+        <img 
+          src="/images/logo.png" 
+          alt="CourtSide Logo" 
+          className="h-12 w-auto object-contain"
+        />
+      </div>
+      
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-bold text-white">Pick your team!</h1>
         <p className="text-lg text-neutral-300">Choose your favorite NBA team to personalize your experience</p>

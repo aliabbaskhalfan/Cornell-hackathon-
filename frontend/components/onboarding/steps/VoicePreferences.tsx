@@ -62,6 +62,15 @@ export default function VoicePreferences({ data, updateData, onNext, onPrevious,
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
+      {/* Logo in top left */}
+      <div className="flex justify-start">
+        <img 
+          src="/images/logo.png" 
+          alt="CourtSide Logo" 
+          className="h-12 w-auto object-contain"
+        />
+      </div>
+      
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-bold text-white">Choose your commentator voice</h1>
         <p className="text-lg text-neutral-300">Customize the voice and audio settings for your AI commentator</p>
