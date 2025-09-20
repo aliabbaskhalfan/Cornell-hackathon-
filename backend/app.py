@@ -27,4 +27,5 @@ def health_check():
     return jsonify({"status": "healthy", "message": "Sports Commentator API"})
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    port = int(os.getenv('PORT', 5002))  # Changed from 5000 to 5002 to avoid conflicts
+    socketio.run(app, debug=True, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)

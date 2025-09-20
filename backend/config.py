@@ -15,9 +15,8 @@ class Config:
     # Google AI
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
     
-    # Google Cloud TTS
-    GOOGLE_CLOUD_PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT_ID')
-    GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+    # ElevenLabs TTS
+    ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
     
     # Polling intervals
     SCOREBOARD_POLL_INTERVAL = 5  # seconds

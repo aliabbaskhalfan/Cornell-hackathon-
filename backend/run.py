@@ -12,17 +12,19 @@ if __name__ == '__main__':
     os.environ['FLASK_ENV'] = 'development'
     os.environ['FLASK_DEBUG'] = '1'
     
+    port = int(os.getenv('PORT', 5002))  # Use port 5002 to avoid conflicts
+    
     print("🏀 Starting Sports Commentator API Server...")
     print("📡 Socket.IO enabled for real-time updates")
-    print("🔗 API available at: http://localhost:5000")
-    print("📊 Health check: http://localhost:5000/")
+    print(f"🔗 API available at: http://localhost:{port}")
+    print(f"📊 Health check: http://localhost:{port}/")
     
     try:
         socketio.run(
             app,
             debug=True,
             host='0.0.0.0',
-            port=5000,
+            port=port,
             allow_unsafe_werkzeug=True
         )
     except KeyboardInterrupt:

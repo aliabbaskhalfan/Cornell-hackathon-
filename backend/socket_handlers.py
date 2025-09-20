@@ -1,4 +1,5 @@
 from flask_socketio import emit, join_room, leave_room
+from flask import request
 import logging
 
 logger = logging.getLogger(__name__)
@@ -7,7 +8,7 @@ def register_socket_handlers(socketio):
     """Register all socket event handlers"""
     
     @socketio.on('connect')
-    def handle_connect():
+    def handle_connect(auth=None):
         logger.info(f"Client connected: {request.sid}")
         emit('connected', {'message': 'Connected to Sports Commentator'})
     

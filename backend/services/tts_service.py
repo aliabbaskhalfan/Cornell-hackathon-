@@ -1,4 +1,4 @@
-from google.cloud import texttospeech
+import requests
 from config import Config
 import logging
 import uuid
@@ -8,72 +8,92 @@ logger = logging.getLogger(__name__)
 
 class TTSService:
     def __init__(self):
-        self.client = texttospeech.TextToSpeechClient()
+        self.api_key = Config.ELEVENLABS_API_KEY
+        self.base_url = "https://api.elevenlabs.io/v1"
         
-        # Voice configurations for different personas
+        # ElevenLabs voice configurations for different personas
         self.voice_configs = {
             'nerdy': {
-                'name': 'en-US-Neural2-D',
-                'ssml_gender': texttospeech.SsmlVoiceGender.MALE,
-                'speaking_rate': 0.9,
-                'pitch': -2.0
+                'voice_id': 'pNInz6obpgDQGcFmaJgB',  # Adam - analytical male voice
+                'stability': 0.75,
+                'similarity_boost': 0.75,
+                'style': 0.0,
+                'use_speaker_boost': True
             },
             'passionate': {
-                'name': 'en-US-Neural2-F',
-                'ssml_gender': texttospeech.SsmlVoiceGender.FEMALE,
-                'speaking_rate': 1.1,
-                'pitch': 2.0
+                'voice_id': 'EXAVITQu4vr4xnSDxMaL',  # Bella - energetic female voice
+                'stability': 0.5,
+                'similarity_boost': 0.75,
+                'style': 0.0,
+                'use_speaker_boost': True
+            },
+            'funny': {
+                'voice_id': 'VR6AewLTigWG4xSOukaG',  # Josh - expressive male voice
+                'stability': 0.4,
+                'similarity_boost': 0.8,
+                'style': 0.2,
+                'use_speaker_boost': True
             },
             'raw': {
-                'name': 'en-US-Neural2-A',
-                'ssml_gender': texttospeech.SsmlVoiceGender.MALE,
-                'speaking_rate': 1.0,
-                'pitch': 0.0
+                'voice_id': 'AZnzlk1XvdvUeBnXmlld',  # Domi - clear female voice
+                'stability': 0.8,
+                'similarity_boost': 0.6,
+                'style': 0.0,
+                'use_speaker_boost': False
             }
         }
     
     def generate_audio(self, text, persona='passionate'):
-        """Generate audio from text using Google Cloud TTS"""
+        """Generate audio from text using ElevenLabs TTS"""
         try:
+            if not self.api_key:
+                logger.warning("ElevenLabs API key not configured")
+                return None
+            
             voice_config = self.voice_configs.get(persona, self.voice_configs['passionate'])
             
-            # Configure synthesis input
-            synthesis_input = texttospeech.SynthesisInput(text=text)
+            # ElevenLabs API endpoint
+            url = f"{self.base_url}/text-to-speech/{voice_config['voice_id']}"
             
-            # Configure voice
-            voice = texttospeech.VoiceSelectionParams(
-                language_code="en-US",
-                name=voice_config['name'],
-                ssml_gender=voice_config['ssml_gender']
-            )
+            # Headers
+            headers = {
+                "Accept": "audio/mpeg",
+                "Content-Type": "application/json",
+                "xi-api-key": self.api_key
+            }
             
-            # Configure audio
-            audio_config = texttospeech.AudioConfig(
-                audio_encoding=texttospeech.AudioEncoding.MP3,
-                speaking_rate=voice_config['speaking_rate'],
-                pitch=voice_config['pitch']
-            )
+            # Request payload
+            data = {
+                "text": text,
+                "model_id": "eleven_monolingual_v1",
+                "voice_settings": {
+                    "stability": voice_config['stability'],
+                    "similarity_boost": voice_config['similarity_boost'],
+                    "style": voice_config['style'],
+                    "use_speaker_boost": voice_config['use_speaker_boost']
+                }
+            }
             
-            # Perform synthesis
-            response = self.client.synthesize_speech(
-                input=synthesis_input,
-                voice=voice,
-                audio_config=audio_config
-            )
+            # Make API request
+            response = requests.post(url, json=data, headers=headers)
             
-            # Save audio file
-            audio_filename = f"audio_{uuid.uuid4().hex}.mp3"
-            audio_path = os.path.join('static', 'audio', audio_filename)
-            
-            # Ensure directory exists
-            os.makedirs(os.path.dirname(audio_path), exist_ok=True)
-            
-            with open(audio_path, 'wb') as out:
-                out.write(response.audio_content)
-            
-            # Return URL path
-            return f"/static/audio/{audio_filename}"
+            if response.status_code == 200:
+                # Save audio file
+                audio_filename = f"audio_{uuid.uuid4().hex}.mp3"
+                audio_path = os.path.join('static', 'audio', audio_filename)
+                
+                # Ensure directory exists
+                os.makedirs(os.path.dirname(audio_path), exist_ok=True)
+                
+                with open(audio_path, 'wb') as out:
+                    out.write(response.content)
+                
+                # Return URL path
+                return f"/static/audio/{audio_filename}"
+            else:
+                logger.error(f"ElevenLabs API error: {response.status_code} - {response.text}")
+                return None
             
         except Exception as e:
-            logger.error(f"Error generating TTS audio: {e}")
+            logger.error(f"Error generating ElevenLabs TTS audio: {e}")
             return None

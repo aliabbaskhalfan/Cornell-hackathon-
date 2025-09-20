@@ -240,6 +240,7 @@ $RECYCLE.BIN/
 *.pfx
 secrets/
 credentials/
+sportcommentator-bad015085463.json
 
 # Database files
 *.db

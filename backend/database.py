@@ -25,7 +25,6 @@ class Database:
             self.games.create_index("game_id", unique=True)
             self.games.create_index("league")
             self.games.create_index("status")
-            self.games.create_index("updated_at")
             
             # Events indexes
             self.events.create_index([("game_id", 1), ("timestamp", 1)])
@@ -33,13 +32,22 @@ class Database:
             
             # Statlines indexes
             self.statlines.create_index([("game_id", 1), ("player_id", 1)], unique=True)
-            self.statlines.create_index("updated_at")
             
             # Commentary indexes
             self.commentary.create_index([("game_id", 1), ("timestamp", 1)])
             self.commentary.create_index("persona")
             
-            # TTL indexes for automatic cleanup
+            # TTL indexes for automatic cleanup (drop existing first to avoid conflicts)
+            try:
+                self.games.drop_index("updated_at_1")
+            except:
+                pass  # Index doesn't exist, that's fine
+            
+            try:
+                self.statlines.drop_index("updated_at_1")
+            except:
+                pass  # Index doesn't exist, that's fine
+            
             self.games.create_index("updated_at", expireAfterSeconds=86400)  # 24 hours
             self.statlines.create_index("updated_at", expireAfterSeconds=86400)  # 24 hours
             
