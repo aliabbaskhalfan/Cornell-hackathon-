@@ -129,10 +129,15 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
         <div className="text-center mb-8">
           {/* Logo */}
           <div className="flex justify-center mb-6">
-            <Logo size="lg" showText={true} textClassName="text-white" />
+            <Logo size="lg" showText={false} />
           </div>
-          <h1 className="text-5xl font-bold text-white mb-2">
-            Welcome to Courtside
+          <h1 className="text-5xl font-bold text-white mb-2 flex items-center justify-center gap-4">
+            Welcome to 
+            <img 
+              src="/images/logo.png" 
+              alt="Courtside Logo" 
+              className="h-12 w-auto object-contain"
+            />
           </h1>
           <p className="text-xl text-neutral-300">
             Let's personalize your commentary experience
