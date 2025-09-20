@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { TrendingUp, TrendingDown, Clock, Zap } from 'lucide-react'
+import { api } from '@/lib/api'
 
 interface StatUpdate {
   id: string
@@ -16,93 +17,270 @@ interface StatUpdate {
   isNew?: boolean
 }
 
-const initialStats: StatUpdate[] = [
-  {
-    id: '1',
-    type: 'score',
-    player: 'Stephen Curry',
-    team: 'GSW',
-    description: '3-pointer made',
-    value: '+3',
-    timestamp: new Date('2024-01-15T20:30:00Z')
-  },
-  {
-    id: '2',
-    type: 'stat',
-    player: 'LeBron James',
-    team: 'LAL',
-    description: 'Assist',
-    value: '7 AST',
-    timestamp: new Date('2024-01-15T20:29:00Z')
-  },
-  {
-    id: '3',
-    type: 'stat',
-    player: 'Anthony Davis',
-    team: 'LAL',
-    description: 'Block',
-    value: '4 BLK',
-    timestamp: new Date('2024-01-15T20:28:00Z')
-  }
-]
+const initialStats: StatUpdate[] = []
 
-export function StatsFeed() {
+interface StatsFeedProps {
+  clockSeconds?: number
+  quarterIndex?: number
+}
+
+export function StatsFeed({ clockSeconds, quarterIndex }: StatsFeedProps) {
   const [stats, setStats] = useState<StatUpdate[]>(initialStats)
   const [mounted, setMounted] = useState(false)
+  const [gameId, setGameId] = useState<string | null>(null)
+  const [roster, setRoster] = useState<Record<string, string>>({})
+  const [useMock, setUseMock] = useState(false)
+  const lastClockRef = useRef<number | null>(null)
+  const lastQuarterRef = useRef<number | null>(null)
+  const [schedule, setSchedule] = useState<Array<{ id: string; quarter: number; at: number; play: { player: string; team: string; description: string; value?: string; type: 'score' | 'stat' } }>>([])
 
   // Handle client-side mounting
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  // Fetch initial game data
   useEffect(() => {
-    const interval = setInterval(() => {
-      const newUpdates = [
-        'made a 3-pointer',
-        'recorded an assist',
-        'grabbed a rebound',
-        'made a steal',
-        'blocked a shot',
-        'committed a foul',
-        'made a free throw',
-        'scored 2 points'
-      ]
-      
-      const players = ['Stephen Curry', 'LeBron James', 'Giannis Antetokounmpo', 'Jayson Tatum', 'Luka Dončić']
-      const teams = ['GSW', 'LAL', 'MIL', 'BOS', 'DAL']
-      
-      const randomPlayer = players[Math.floor(Math.random() * players.length)]
-      const randomTeam = teams[Math.floor(Math.random() * teams.length)]
-      const randomUpdate = newUpdates[Math.floor(Math.random() * newUpdates.length)]
-      
-      const newStat: StatUpdate = {
-        id: Date.now().toString(),
-        type: Math.random() > 0.7 ? 'score' : 'stat',
-        player: randomPlayer,
-        team: randomTeam,
-        description: randomUpdate,
-        value: Math.random() > 0.5 ? `+${Math.floor(Math.random() * 3) + 1}` : '',
-        timestamp: new Date(),
-        isNew: true
+    const fetchGameData = async () => {
+      try {
+        const response = await api.getScoreboard()
+        if (response.success && response.games.length > 0) {
+          const live = response.games.find((g: any) => g.status === 'InProgress')
+          const game = live || response.games[0]
+          const selectedGameId = game.game_id || game.gameId
+          setGameId(selectedGameId)
+          setUseMock(!live)
+          try {
+            const snap = await api.getGameSnapshot(selectedGameId)
+            if (snap.success && snap.box_score) {
+              const rawPlayers = snap.box_score.players || snap.box_score.Players || []
+              const mapping: Record<string, string> = {}
+              ;(rawPlayers as any[]).forEach((p: any) => {
+                const id = String(p.playerId ?? p.PlayerID ?? '')
+                const name = p.name ?? p.Name
+                if (id && name) mapping[id] = name
+              })
+              setRoster(mapping)
+            }
+          } catch {}
+        } else {
+          setUseMock(true)
+        }
+      } catch (error) {
+        console.error('Error fetching game data:', error)
+        setUseMock(true)
       }
+    }
 
-      setStats(prevStats => {
-        const updated = [newStat, ...prevStats.slice(0, 19)] // Keep only 20 most recent
-        // Remove the "new" flag after 3 seconds
-        setTimeout(() => {
-          setStats(current => 
-            current.map(stat => 
-              stat.id === newStat.id ? { ...stat, isNew: false } : stat
-            )
-          )
-        }, 3000)
-        
-        return updated
+    fetchGameData()
+  }, [])
+
+  const inferPointsFromDescription = (desc?: string): number => {
+    if (!desc) return 0
+    const d = desc.toLowerCase()
+    if (d.includes('3-pt') || d.includes('3pt') || d.includes('three')) return 3
+    if (d.includes('free throw')) return 1
+    if (d.includes('2-pt') || d.includes('2pt') || d.includes('layup') || d.includes('dunk') || d.includes('jumper')) return 2
+    return 0
+  }
+
+  const extractPlayerFromDescription = (desc?: string): string | null => {
+    if (!desc) return null
+    const markers = [' makes ', ' misses ', ' blocks ', ' steals ', ' assists ', ' with ', ' draws ', ' turnover', ' fouled']
+    let idx = -1
+    for (const m of markers) {
+      const i = desc.indexOf(m)
+      if (i !== -1) {
+        idx = i
+        break
+      }
+    }
+    if (idx === -1) return null
+    const candidate = desc.slice(0, idx).trim()
+    if (candidate.length >= 3 && candidate.length <= 40) return candidate
+    return null
+  }
+
+  // -------- Time-driven scheduling (prefer real data) --------
+  const generateFallbackQuarterSchedule = (qIndex: number) => {
+    // Fallback simple schedule every ~15s across 12 minutes
+    const items: Array<{ id: string; quarter: number; at: number; play: { player: string; team: string; description: string; value?: string; type: 'score' | 'stat' } }> = []
+    const templates = [
+      { player: 'LeBron James', team: 'LAL', description: 'makes a driving layup', value: '+2', type: 'score' as const },
+      { player: 'Anthony Davis', team: 'LAL', description: 'blocks the shot', type: 'stat' as const },
+      { player: 'D\'Angelo Russell', team: 'LAL', description: 'hits a 3-pointer', value: '+3', type: 'score' as const },
+      { player: 'Austin Reaves', team: 'LAL', description: 'records an assist', type: 'stat' as const },
+      { player: 'Scoot Henderson', team: 'POR', description: 'drains a mid-range jumper', value: '+2', type: 'score' as const },
+      { player: 'Anfernee Simons', team: 'POR', description: 'from deep for three', value: '+3', type: 'score' as const },
+      { player: 'Jerami Grant', team: 'POR', description: 'blocks the layup', type: 'stat' as const },
+      { player: 'Deandre Ayton', team: 'POR', description: 'putback dunk', value: '+2', type: 'score' as const },
+    ]
+    let t = 12 * 60
+    while (t > 0) {
+      const step = 12 + Math.floor(Math.random() * 9) // 12-20s
+      t = Math.max(0, t - step)
+      const tpl = templates[Math.floor(Math.random() * templates.length)]
+      items.push({ id: `${qIndex}-${t}-${Math.random().toString(36).slice(2,7)}`, quarter: qIndex, at: t, play: tpl })
+    }
+    return items
+  }
+
+  // Reset schedule when entering mock mode or quarter changes
+  useEffect(() => {
+    if (!useMock) return
+    const q = typeof quarterIndex === 'number' ? quarterIndex : 0
+    const needs = !schedule.some(s => s.quarter === q) || lastQuarterRef.current !== q
+    if (!needs) return
+
+    const buildRealSchedule = async () => {
+      try {
+        const snap = await api.getGameSnapshot(gameId || 'lakers_trailblazers_20250413')
+        const raw = snap.play_by_play || []
+        const items: Array<{ id: string; quarter: number; at: number; play: { player: string; team: string; description: string; value?: string; type: 'score' | 'stat' } }> = []
+        raw.forEach((p: any, idx: number) => {
+          const desc = p.Description || p.description || ''
+          const team = p.Team || p.team || 'UNK'
+          const clockStr = p.Clock || p.clock || '12:00'
+          const [m, s] = clockStr.split(':').map((x: string) => parseInt(x, 10))
+          const at = isNaN(m) || isNaN(s) ? 12 * 60 : (m * 60 + s)
+          const lower = desc.toLowerCase()
+          let points = 0
+          if (lower.includes('3-pt') || lower.includes('3pt') || lower.includes('three')) points = 3
+          else if (lower.includes('free throw')) points = 1
+          else if (lower.includes('makes 2-pt') || lower.includes('2-pt') || lower.includes('layup') || lower.includes('dunk') || lower.includes('jumper')) points = 2
+          const playerName = p.PlayerName || p.playerName || extractPlayerFromDescription(desc) || 'Unknown Player'
+          const type = points > 0 ? 'score' as const : 'stat' as const
+          items.push({ id: String(p.PlayID ?? p.playId ?? `${p.Period}-${idx}`), quarter: (p.Period ?? p.period ?? 1) - 1, at, play: { player: playerName, team, description: desc, value: points ? `+${points}` : undefined, type } })
+        })
+        if (items.length > 0) {
+          setSchedule(prev => prev.filter(s => s.quarter !== q).concat(items))
+          lastQuarterRef.current = q
+          lastClockRef.current = typeof clockSeconds === 'number' ? clockSeconds : 12 * 60
+          return
+        }
+      } catch {}
+      // Fallback to synthetic schedule for this quarter
+      const next = generateFallbackQuarterSchedule(q)
+      setSchedule(prev => prev.filter(s => s.quarter !== q).concat(next))
+      lastQuarterRef.current = q
+      lastClockRef.current = typeof clockSeconds === 'number' ? clockSeconds : 12 * 60
+    }
+
+    buildRealSchedule()
+  }, [useMock, quarterIndex, gameId])
+
+  // Drive plays by countdown clock when in mock mode
+  useEffect(() => {
+    if (!useMock) return
+    if (typeof clockSeconds !== 'number') return
+    const q = typeof quarterIndex === 'number' ? quarterIndex : 0
+    if (lastClockRef.current == null) lastClockRef.current = clockSeconds
+
+    const from = lastClockRef.current
+    const to = clockSeconds
+    // Trigger plays whose at is between to..from (since clock counts down)
+    const toEmit = schedule
+      .filter(s => s.quarter === q)
+      .filter(s => s.at <= from && s.at > to)
+      .sort((a, b) => b.at - a.at)
+
+    if (toEmit.length > 0) {
+      toEmit.forEach(s => {
+        const newStat: StatUpdate = {
+          id: s.id,
+          type: s.play.type,
+          player: s.play.player,
+          team: s.play.team,
+          description: s.play.description,
+          value: s.play.value,
+          timestamp: new Date(),
+          isNew: true
+        }
+        setStats(prev => {
+          const exists = prev.some(p => p.id === newStat.id)
+          if (exists) return prev
+          const updated = [newStat, ...prev.slice(0, 19)]
+          setTimeout(() => {
+            setStats(current => current.map(p => p.id === newStat.id ? { ...p, isNew: false } : p))
+          }, 3000)
+          return updated
+        })
       })
-    }, 4000) // New update every 4 seconds
+    }
+
+    lastClockRef.current = clockSeconds
+  }, [clockSeconds, useMock, schedule, quarterIndex])
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (gameId && !useMock) {
+        try {
+          // Fetch play-by-play data from backend
+          const gameSnapshot = await api.getGameSnapshot(gameId)
+          // Refresh roster opportunistically if present
+          if (gameSnapshot.success && gameSnapshot.box_score) {
+            const rawPlayers = gameSnapshot.box_score.players || gameSnapshot.box_score.Players || []
+            if (rawPlayers && (rawPlayers as any[]).length > 0) {
+              const mapping: Record<string, string> = { ...roster }
+              ;(rawPlayers as any[]).forEach((p: any) => {
+                const id = String(p.playerId ?? p.PlayerID ?? '')
+                const name = p.name ?? p.Name
+                if (id && name) mapping[id] = name
+              })
+              setRoster(mapping)
+            }
+          }
+          if (gameSnapshot.success && gameSnapshot.play_by_play) {
+            const recentPlays = gameSnapshot.play_by_play.slice(-5) // Get last 5 plays
+            
+            recentPlays.forEach((play: any) => {
+              const description = play.Description || play.description || play.playText || 'Play occurred'
+              const points = play.points ?? inferPointsFromDescription(description)
+              const pid = String(play.PlayerID ?? play.playerId ?? '')
+              const parsedName = extractPlayerFromDescription(description)
+              const playerName = roster[pid] || play.PlayerName || play.playerName || parsedName || 'Unknown Player'
+              const team = play.Team || play.team || 'UNK'
+              const newStat: StatUpdate = {
+                id: String(play.PlayID ?? play.playId ?? Date.now()),
+                type: points > 0 ? 'score' : 'stat',
+                player: playerName,
+                team,
+                description,
+                value: points ? `+${points}` : '',
+                timestamp: new Date(),
+                isNew: true
+              }
+
+              setStats(prevStats => {
+                // Check if this play already exists
+                const exists = prevStats.some(stat => stat.id === newStat.id)
+                if (!exists) {
+                  const updated = [newStat, ...prevStats.slice(0, 19)] // Keep only 20 most recent
+                  // Remove the "new" flag after 3 seconds
+                  setTimeout(() => {
+                    setStats(current => 
+                      current.map(stat => 
+                        stat.id === newStat.id ? { ...stat, isNew: false } : stat
+                      )
+                    )
+                  }, 3000)
+                  
+                  return updated
+                }
+                return prevStats
+              })
+            })
+          }
+        } catch (error) {
+          console.error('Error fetching play-by-play data:', error)
+        }
+      } else {
+        // In mock mode, scheduling is driven by the game clock above; nothing to do on interval
+      }
+    }, 5000) // Check for updates every 5 seconds
 
     return () => clearInterval(interval)
-  }, [])
+  }, [gameId])
 
   const getStatIcon = (type: string) => {
     switch (type) {
@@ -123,6 +301,7 @@ export function StatsFeed() {
     const colors: { [key: string]: string } = {
       'GSW': 'bg-blue-100 text-blue-800',
       'LAL': 'bg-purple-100 text-purple-800',
+      'POR': 'bg-red-100 text-red-800',
       'MIL': 'bg-green-100 text-green-800',
       'BOS': 'bg-green-100 text-green-800',
       'DAL': 'bg-blue-100 text-blue-800'

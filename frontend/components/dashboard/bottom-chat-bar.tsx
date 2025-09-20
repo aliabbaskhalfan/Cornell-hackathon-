@@ -7,12 +7,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Mic, MicOff, Send, Bot, User, MessageCircle, ChevronUp, Plus, Globe, Megaphone, AppWindow, Circle, AudioWaveform } from 'lucide-react'
+import { api } from '@/lib/api'
 
 interface Message {
   id: string
   type: 'user' | 'assistant'
   content: string
   timestamp: Date
+  audioUrl?: string
 }
 
 export function BottomChatBar() {
@@ -65,30 +67,57 @@ export function BottomChatBar() {
     }
 
     setMessages(prev => [...prev, userMessage])
+    const userInput = inputValue
     setInputValue('')
     setIsLoading(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "Based on the current stats, LeBron is having a great game with excellent court vision!",
-        "Stephen Curry is shooting lights out from three-point range tonight!",
-        "Giannis is dominating both ends of the court with his athleticism.",
-        "The pace of this game is really picking up in this quarter.",
-        "That's an interesting observation about the defensive matchups.",
-        "Looking at the recent plays, I can see the momentum shifting."
+    try {
+      // Get user preferences from localStorage
+      const userPreferences = localStorage.getItem('user-preferences')
+      const preferences = userPreferences ? JSON.parse(userPreferences) : {}
+      
+      // Process voice query with backend
+      const response = await api.processVoiceQuery(
+        userInput,
+        undefined, // gameId - will be determined by backend
+        preferences.energyLevel > 70 ? 'passionate' : 'analytical', // persona based on energy level
+        preferences // user context
+      )
+
+      if (response.success) {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'assistant',
+          content: response.response.text || response.response,
+          timestamp: new Date(),
+          audioUrl: response.response.audio_url
+        }
+
+        setMessages(prev => [...prev, assistantMessage])
+      } else {
+        throw new Error(response.error || 'Failed to process query')
+      }
+    } catch (error) {
+      console.error('Error processing voice query:', error)
+      
+      // Fallback response
+      const fallbackResponses = [
+        "I'm having trouble processing that right now. Let me try again in a moment.",
+        "There seems to be a connection issue. Please try again.",
+        "I'm experiencing some technical difficulties. Please rephrase your question."
       ]
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: responses[Math.floor(Math.random() * responses.length)],
+        content: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)],
         timestamp: new Date()
       }
 
       setMessages(prev => [...prev, assistantMessage])
+    } finally {
       setIsLoading(false)
-    }, 1500)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -221,6 +250,14 @@ export function BottomChatBar() {
                         }`}
                       >
                         <p className="text-sm">{message.content}</p>
+                        {message.audioUrl && message.type === 'assistant' && (
+                          <div className="mt-2">
+                            <audio controls className="w-full h-8">
+                              <source src={message.audioUrl} type="audio/mpeg" />
+                              Your browser does not support the audio element.
+                            </audio>
+                          </div>
+                        )}
                         <p
                           className={`text-xs mt-1 ${
                             message.type === 'user'
