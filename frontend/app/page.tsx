@@ -43,7 +43,7 @@ export default function HomePage() {
                   Setup Complete!
                 </h1>
                 <p className="text-lg text-neutral-300">
-                  Your personalized Courtside commentator is ready to go.
+                  Your personalized commentator is ready to go.
                 </p>
               </div>
 
