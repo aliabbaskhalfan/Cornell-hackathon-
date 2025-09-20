@@ -8,6 +8,7 @@ import CommentaryStyle from './steps/CommentaryStyle';
 import VoicePreferences from './steps/VoicePreferences';
 import CustomInstructions from './steps/CustomInstructions';
 import PreviewConfirm from './steps/PreviewConfirm';
+import Logo from '@/components/ui/logo';
 
 const STEPS: OnboardingStep[] = [
   {
@@ -126,6 +127,10 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="text-center mb-8">
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <Logo size="lg" showText={true} textClassName="text-white" />
+          </div>
           <h1 className="text-5xl font-bold text-white mb-2">
             Welcome to Courtside
           </h1>
