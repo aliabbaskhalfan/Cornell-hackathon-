@@ -66,14 +66,14 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
         <p className="text-lg text-neutral-300">Review your settings and start your personalized commentary experience</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Column */}
         <div className="space-y-6">
           <h2 className="text-2xl font-semibold text-white">Your Settings</h2>
           
           {/* Team Selection */}
-          <Card className="bg-neutral-800 border-neutral-700 h-32 flex">
-            <CardContent className="p-6 flex-1 flex flex-col justify-between">
+          <Card className="bg-neutral-800 border-neutral-700">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   {data.favoriteTeam ? (
@@ -117,8 +117,8 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
           </Card>
 
           {/* Commentary Style */}
-          <Card className="bg-neutral-800 border-neutral-700 h-32 flex">
-            <CardContent className="p-6 flex-1 flex flex-col justify-between">
+          <Card className="bg-neutral-800 border-neutral-700">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-white">Commentary Style</h3>
                 <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
@@ -163,8 +163,8 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
           <h2 className="text-2xl font-semibold text-white">Additional Settings</h2>
           
           {/* Voice Settings */}
-          <Card className="bg-neutral-800 border-neutral-700 h-32 flex">
-            <CardContent className="p-6 flex-1 flex flex-col justify-between">
+          <Card className="bg-neutral-800 border-neutral-700">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-white">Voice Settings</h3>
                 <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
@@ -194,8 +194,8 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
           </Card>
 
           {/* Features */}
-          <Card className="bg-neutral-800 border-neutral-700 h-32 flex">
-            <CardContent className="p-6 flex-1 flex flex-col justify-between">
+          <Card className="bg-neutral-800 border-neutral-700">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-white">Features</h3>
                 <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
@@ -219,30 +219,28 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
               </div>
             </CardContent>
           </Card>
+
+          {/* Custom Instructions */}
+          {data.customInstructions && (
+            <Card className="bg-neutral-800 border-neutral-700">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-white">Custom Instructions</h3>
+                    <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  </div>
+                  <div className="bg-neutral-700 p-4 rounded-lg">
+                    <p className="text-neutral-300 text-sm whitespace-pre-wrap">{data.customInstructions}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
-
-      {/* Custom Instructions - Full Width Below Grid */}
-      {data.customInstructions && (
-        <div className="mt-8">
-          <Card className="bg-neutral-800 border-neutral-700">
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-white">Custom Instructions</h3>
-                  <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
-                    <Edit3 className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                </div>
-                <div className="bg-neutral-700 p-4 rounded-lg">
-                  <p className="text-neutral-300 text-sm whitespace-pre-wrap">{data.customInstructions}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {/* Navigation */}
       <div className="flex justify-between pt-6">
