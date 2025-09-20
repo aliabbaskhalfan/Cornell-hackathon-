@@ -1,20 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, Volume2, Edit3, CheckCircle } from 'lucide-react';
+import { Edit3 } from 'lucide-react';
 import { OnboardingStepProps } from '@/types/onboarding';
 
 export default function PreviewConfirm({ data, updateData, onNext, onPrevious, isFirstStep }: OnboardingStepProps) {
-  const [isPlayingPreview, setIsPlayingPreview] = useState(false);
-
-  const playPreview = () => {
-    setIsPlayingPreview(true);
-    // Simulate audio preview
-    setTimeout(() => setIsPlayingPreview(false), 3000);
-  };
 
   const getSliderLabel = (value: number, labels: [string, string]) => {
     const [left, right] = labels;
@@ -164,7 +156,12 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
               </div>
             </CardContent>
           </Card>
+        </div>
 
+        {/* Right Column - Voice Settings and Features */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-semibold text-white">Additional Settings</h2>
+          
           {/* Voice Settings */}
           <Card className="bg-neutral-800 border-neutral-700">
             <CardContent className="p-6">
@@ -218,39 +215,6 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
                   <Badge variant={data.backgroundAudio ? "default" : "secondary"}>
                     {data.backgroundAudio ? "Enabled" : "Disabled"}
                   </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Live Preview */}
-        <div className="space-y-6">
-          <h2 className="text-2xl font-semibold text-white">Live Preview</h2>
-          
-          <Card className="bg-neutral-800 border-neutral-700">
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <h3 className="font-semibold text-white">Sample Commentary</h3>
-                <div className="bg-neutral-700 p-4 rounded-lg">
-                  <p className="text-neutral-300 italic mb-4">"{generateWelcomeMessage()}"</p>
-                  <Button
-                    onClick={playPreview}
-                    disabled={isPlayingPreview}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    {isPlayingPreview ? (
-                      <>
-                        <Volume2 className="h-4 w-4 mr-2 animate-pulse" />
-                        Playing Preview...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4 mr-2" />
-                        Play Full Preview
-                      </>
-                    )}
-                  </Button>
                 </div>
               </div>
             </CardContent>
