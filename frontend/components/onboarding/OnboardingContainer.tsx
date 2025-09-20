@@ -127,19 +127,15 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          {/* Logo */}
-          <div className="flex justify-center mb-6">
-            <Logo size="lg" showText={false} />
-          </div>
-          <h1 className="text-5xl font-bold text-white mb-2 flex items-center justify-center gap-4">
-            Welcome to 
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <h1 className="text-4xl font-bold text-white">Welcome to</h1>
             <img 
               src="/images/logo.png" 
-              alt="Courtside Logo" 
-              className="w-auto object-contain"
-              style={{ height: '220px' }}
+              alt="CourtSide logo" 
+              className="h-12 w-auto align-middle"
+              style={{ background: 'transparent !important' }}
             />
-          </h1>
+          </div>
           <p className="text-xl text-neutral-300">
             Let's personalize your commentary experience
           </p>
