@@ -125,8 +125,8 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
   return (
     <div className="min-h-screen bg-neutral-900 relative">
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Top Right Logo */}
-        <div className="absolute top-6 right-6">
+        {/* Top Left Logo */}
+        <div className="absolute top-6 left-6">
           <img 
             src="/images/logo.png" 
             alt="CourtSide Logo" 
