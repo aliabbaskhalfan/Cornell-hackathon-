@@ -38,7 +38,7 @@ export default function HomePage() {
                 <img 
                   src="/images/logo.png" 
                   alt="CourtSide Logo" 
-                  className="h-16 w-auto object-contain logo-transparent"
+                  className="h-24 w-auto object-contain logo-transparent"
                 />
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
                   <CheckCircle className="h-12 w-12 text-green-600" />
