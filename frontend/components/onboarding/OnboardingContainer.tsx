@@ -131,6 +131,10 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
             src="/images/logo.png" 
             alt="CourtSide Logo" 
             className="h-12 w-auto object-contain"
+            style={{ 
+              background: 'transparent',
+              mixBlendMode: 'multiply'
+            }}
           />
         </div>
         
