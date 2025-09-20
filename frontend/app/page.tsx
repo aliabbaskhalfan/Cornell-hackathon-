@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import OnboardingContainer from '@/components/onboarding/OnboardingContainer'
 import { OnboardingData } from '@/types/onboarding'
+import { api } from '@/lib/api'
 
 export default function HomePage() {
   const router = useRouter()
@@ -11,8 +12,12 @@ export default function HomePage() {
     // Clear the saved data from localStorage since onboarding is complete
     localStorage.removeItem('onboarding-data')
     
-    // Redirect to dashboard instead of showing completion modal
-    router.push('/dashboard')
+    // Persist preferences to backend then redirect
+    api.saveUserPreferences(data)
+      .catch(() => {})
+      .finally(() => {
+        router.push('/dashboard')
+      })
   };
 
   const handleSkip = () => {

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Lightbulb, Mic, Volume2 } from 'lucide-react';
+import { Lightbulb, Mic, Volume2, LineChart } from 'lucide-react';
 import { OnboardingStepProps, CUSTOM_INSTRUCTION_EXAMPLES } from '@/types/onboarding';
 
 export default function CustomInstructions({ data, updateData, onNext, onPrevious, isFirstStep }: OnboardingStepProps) {
@@ -52,6 +52,57 @@ export default function CustomInstructions({ data, updateData, onNext, onPreviou
       </div>
 
       <div className="space-y-8">
+        {/* Fantasy Info */}
+        <Card className="bg-neutral-800 border-neutral-700">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <LineChart className="h-6 w-6 text-purple-500" />
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Fantasy Alerts</h3>
+                  <p className="text-sm text-neutral-400">Provide fantasy team context to get tailored updates</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-1">
+                  <label className="block text-sm text-neutral-300 mb-2">Platform</label>
+                  <Select
+                    value={data.fantasyInfo?.league || ''}
+                    onValueChange={(val) => updateData({ fantasyInfo: { ...(data.fantasyInfo || {}), league: val as any } })}
+                  >
+                    <SelectTrigger className="bg-neutral-700 border-neutral-600 text-white">
+                      <SelectValue placeholder="Select league" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-neutral-800 text-white border-neutral-700">
+                      <SelectItem value="Yahoo">Yahoo</SelectItem>
+                      <SelectItem value="ESPN">ESPN</SelectItem>
+                      <SelectItem value="Sleeper">Sleeper</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-neutral-300 mb-2">Team Name</label>
+                  <Textarea
+                    placeholder="e.g., Downtown Dimes"
+                    value={data.fantasyInfo?.teamName || ''}
+                    onChange={(e) => updateData({ fantasyInfo: { ...(data.fantasyInfo || {}), teamName: e.target.value } })}
+                    className="min-h-[44px] resize-none bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-neutral-300 mb-2">Notes (players, league settings, etc.)</label>
+                <Textarea
+                  placeholder="List your key players or custom rules to watch for"
+                  value={data.fantasyInfo?.notes || ''}
+                  onChange={(e) => updateData({ fantasyInfo: { ...(data.fantasyInfo || {}), notes: e.target.value } })}
+                  className="min-h-[80px] resize-none bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         {/* Custom Instructions */}
         <Card className="bg-neutral-800 border-neutral-700">
           <CardContent className="p-6">

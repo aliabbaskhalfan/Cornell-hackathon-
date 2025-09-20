@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit3 } from 'lucide-react';
 import { OnboardingStepProps } from '@/types/onboarding';
 
-export default function PreviewConfirm({ data, updateData, onNext, onPrevious, isFirstStep }: OnboardingStepProps) {
+export default function PreviewConfirm({ data, updateData, onNext, onPrevious, isFirstStep, goToStep }: OnboardingStepProps) {
 
   const getSliderLabel = (value: number, labels: [string, string]) => {
     const [left, right] = labels;
@@ -108,7 +108,7 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
                     </div>
                   )}
                 </div>
-                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
+                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(0)}>
                   <Edit3 className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
@@ -121,7 +121,7 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-white">Commentary Style</h3>
-                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
+                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(1)}>
                   <Edit3 className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
@@ -167,7 +167,7 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-white">Voice Settings</h3>
-                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
+                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(2)}>
                   <Edit3 className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
@@ -198,7 +198,7 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-white">Features</h3>
-                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
+                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(3)}>
                   <Edit3 className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
@@ -227,7 +227,7 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-white">Custom Instructions</h3>
-                    <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
+                    <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(3)}>
                       <Edit3 className="h-4 w-4 mr-2" />
                       Edit
                     </Button>

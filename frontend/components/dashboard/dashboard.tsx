@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { GameHeader } from './game-header'
+import { Header } from '@/components/layout/header'
 import { NBAStatsTable } from './nba-stats-table'
 import { StatsFeed } from './stats-feed'
 import { BottomChatBar } from './bottom-chat-bar'
@@ -286,6 +287,7 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-neutral-900">
+      <Header onMenuClick={() => {}} selectedGame={null} />
       {/* Fixed Logo - Top Left */}
       <div className="fixed -top-8 -left-8 z-50">
         <img 

@@ -1,8 +1,9 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Menu, Volume2, VolumeX, Mic, MicOff } from 'lucide-react'
+import { Menu, Volume2, VolumeX, Mic, MicOff, User } from 'lucide-react'
 import { useState } from 'react'
+import Link from 'next/link'
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -61,6 +62,13 @@ export function Header({ onMenuClick, selectedGame }: HeaderProps) {
           >
             {micEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
           </Button>
+
+          <Link href="/dashboard/profile" className="ml-1">
+            <Button variant="outline" size="sm" className="hidden md:flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Profile
+            </Button>
+          </Link>
         </div>
       </div>
     </header>

@@ -54,7 +54,8 @@ const INITIAL_DATA: OnboardingData = {
   commentaryFrequency: 'key-moments',
   customInstructions: '',
   liveQA: true,
-  backgroundAudio: true
+  backgroundAudio: true,
+  fantasyInfo: {}
 };
 
 interface OnboardingContainerProps {
@@ -108,6 +109,16 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
       setIsAnimating(true);
       setTimeout(() => {
         setCurrentStep(prev => prev - 1);
+        setIsAnimating(false);
+      }, 150);
+    }
+  };
+
+  const goToStep = (index: number) => {
+    if (index >= 0 && index < STEPS.length) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentStep(index);
         setIsAnimating(false);
       }, 150);
     }
@@ -167,6 +178,7 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
             onPrevious={handlePrevious}
             isFirstStep={currentStep === 0}
             isLastStep={currentStep === STEPS.length - 1}
+            goToStep={goToStep}
           />
         </div>
 

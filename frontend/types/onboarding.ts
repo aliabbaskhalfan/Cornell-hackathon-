@@ -25,6 +25,11 @@ export interface OnboardingData {
   customInstructions: string;
   liveQA: boolean;
   backgroundAudio: boolean;
+  fantasyInfo?: {
+    league?: 'Yahoo' | 'ESPN' | 'Sleeper' | 'Other';
+    teamName?: string;
+    notes?: string;
+  };
 }
 
 export interface OnboardingStep {
@@ -41,6 +46,7 @@ export interface OnboardingStepProps {
   onPrevious: () => void;
   isFirstStep: boolean;
   isLastStep: boolean;
+  goToStep?: (index: number) => void;
 }
 
 export interface CustomInstructionExample {
