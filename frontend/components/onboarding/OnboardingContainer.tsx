@@ -123,11 +123,20 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
 
   return (
     <div className="min-h-screen bg-neutral-900">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      {/* Fixed Logo - Top Left */}
+      <div className="fixed -top-8 -left-8 z-50">
+        <img 
+          src="/images/logo.png" 
+          alt="CourtSide Logo" 
+          className="h-48 w-auto object-contain"
+        />
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 py-8 pt-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-white mb-2">
-            Welcome to Courtside
+            Welcome!
           </h1>
           <p className="text-xl text-neutral-300">
             Let's personalize your commentary experience
