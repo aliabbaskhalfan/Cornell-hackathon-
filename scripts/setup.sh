@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Sports Commentator Setup Script
-echo "🏀 Setting up AI Sports Commentator..."
+echo "🏀 Setting up Courtside..."
 
 # Check if Python 3.10+ is installed
 python_version=$(python3 --version 2>&1 | cut -d' ' -f2 | cut -d'.' -f1,2)

@@ -1,4 +1,4 @@
-🏀 AI Sports Commentator
+🏀 Courtside: Every play, any voice - Powered by Gemini
 
 Core Concept
 

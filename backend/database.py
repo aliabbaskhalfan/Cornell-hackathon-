@@ -15,6 +15,7 @@ class Database:
         self.events = self.db.events
         self.statlines = self.db.statlines
         self.commentary = self.db.commentary
+        self.user_contexts = self.db.user_contexts
         
         self._create_indexes()
     
@@ -36,6 +37,9 @@ class Database:
             # Commentary indexes
             self.commentary.create_index([("game_id", 1), ("timestamp", 1)])
             self.commentary.create_index("persona")
+
+            # User contexts indexes
+            self.user_contexts.create_index("updated_at")
             
             # TTL indexes for automatic cleanup (drop existing first to avoid conflicts)
             try:

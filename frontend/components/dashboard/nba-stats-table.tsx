@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
+import { NBA_TEAMS } from '@/data/nba-teams'
 import {
   Table,
   TableBody,
@@ -192,6 +193,21 @@ export function NBAStatsTable() {
   const [loading, setLoading] = useState(true)
   const [gameId, setGameId] = useState<string | null>(null)
 
+  const ensureMinimumPlayersPerTeam = (players: PlayerStats[]): PlayerStats[] => {
+    const result = [...players]
+    const teams = Array.from(new Set(players.map(p => p.team)))
+    teams.forEach(team => {
+      const current = result.filter(p => p.team === team)
+      if (current.length < 5) {
+        const fillers = mockPlayerStats
+          .filter(p => p.team === team && !current.some(c => c.id === p.id))
+          .slice(0, 5 - current.length)
+        result.push(...fillers)
+      }
+    })
+    return result
+  }
+
   // Fetch initial game data and stats
   useEffect(() => {
     const fetchGameData = async () => {
@@ -208,7 +224,7 @@ export function NBAStatsTable() {
           const gameSnapshot = await api.getGameSnapshot(selectedGameId)
           if (gameSnapshot.success && gameSnapshot.box_score) {
             const rawPlayers = gameSnapshot.box_score.players || gameSnapshot.box_score.Players || []
-            const playerStats = (rawPlayers as any[]).map((player: any) => ({
+            let playerStats = (rawPlayers as any[]).map((player: any) => ({
               id: player.playerId ?? player.PlayerID ?? String(Math.random()),
               name: player.name ?? player.Name ?? 'Unknown Player',
               team: player.team ?? player.Team ?? 'UNK',
@@ -223,7 +239,8 @@ export function NBAStatsTable() {
               minutes: player.minutes ?? player.Minutes ?? 0,
               fouls: player.fouls ?? player.PersonalFouls ?? 0
             })) || []
-            
+
+            playerStats = ensureMinimumPlayersPerTeam(playerStats)
             setStats(playerStats)
           } else {
             // Fallback to mock data
@@ -255,7 +272,7 @@ export function NBAStatsTable() {
         const result = await api.getGameSnapshot(gameId).catch(() => null)
         if (result && result.success && result.box_score) {
           const rawPlayers = result.box_score.players || result.box_score.Players || []
-          const freshStats = (rawPlayers as any[]).map((player: any) => ({
+          let freshStats = (rawPlayers as any[]).map((player: any) => ({
             id: player.playerId ?? player.PlayerID ?? String(Math.random()),
             name: player.name ?? player.Name ?? 'Unknown Player',
             team: player.team ?? player.Team ?? 'UNK',
@@ -271,6 +288,7 @@ export function NBAStatsTable() {
             fouls: player.fouls ?? player.PersonalFouls ?? 0
           })) || []
 
+          freshStats = ensureMinimumPlayersPerTeam(freshStats)
           setStats(prevStats => {
             const updatedStats = freshStats.map(freshPlayer => {
               const prevPlayer = prevStats.find(p => p.id === freshPlayer.id)
@@ -363,64 +381,100 @@ export function NBAStatsTable() {
   return (
     <div className="space-y-4">
 
-      <div className="h-[600px] border border-transparent rounded-lg overflow-hidden flex flex-col">
+      <div className="h-[520px] border border-transparent rounded-lg overflow-hidden flex flex-col">
         <div className="flex-1 w-full">
-          <Table className="w-full table-fixed h-full">
+          <div className="h-full">
+            <ScrollArea className="h-full">
+              <div className="w-full overflow-x-auto">
+              <Table className="min-w-[900px] table-fixed text-xs">
             <TableHeader className="bg-neutral-900">
               <TableRow className="border-b border-neutral-800 hover:bg-transparent">
-                <TableHead className="text-neutral-400 font-medium w-48">Player</TableHead>
-                <TableHead className="text-neutral-400 font-medium w-20">Team</TableHead>
-                <TableHead className="text-neutral-400 font-medium w-16">Pos</TableHead>
-                <TableHead className="text-neutral-400 font-medium text-right w-16">PTS</TableHead>
-                <TableHead className="text-neutral-400 font-medium text-right w-16">REB</TableHead>
-                <TableHead className="text-neutral-400 font-medium text-right w-16">AST</TableHead>
-                <TableHead className="text-neutral-400 font-medium text-right w-16">STL</TableHead>
-                <TableHead className="text-neutral-400 font-medium text-right w-16">BLK</TableHead>
-                <TableHead className="text-neutral-400 font-medium text-right w-16">FG%</TableHead>
-                <TableHead className="text-neutral-400 font-medium text-right w-16">3P%</TableHead>
-                <TableHead className="text-neutral-400 font-medium text-right w-16">MIN</TableHead>
-                <TableHead className="text-neutral-400 font-medium text-right w-16">PF</TableHead>
+                <TableHead className="text-neutral-400 font-medium w-56 pr-2">Player</TableHead>
+                <TableHead className="text-neutral-400 font-medium w-12 pl-1">Team</TableHead>
+                <TableHead className="text-neutral-400 font-medium w-12">Pos</TableHead>
+                <TableHead className="text-neutral-400 font-medium text-right w-12">PTS</TableHead>
+                <TableHead className="text-neutral-400 font-medium text-right w-12">REB</TableHead>
+                <TableHead className="text-neutral-400 font-medium text-right w-12">AST</TableHead>
+                <TableHead className="text-neutral-400 font-medium text-right w-12">STL</TableHead>
+                <TableHead className="text-neutral-400 font-medium text-right w-12">BLK</TableHead>
+                <TableHead className="text-neutral-400 font-medium text-right w-14">FG%</TableHead>
+                <TableHead className="text-neutral-400 font-medium text-right w-14">3P%</TableHead>
+                <TableHead className="text-neutral-400 font-medium text-right w-12">MIN</TableHead>
+                <TableHead className="text-neutral-400 font-medium text-right w-10">PF</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="h-full">
-              {stats.map((player, index) => (
-                <TableRow 
-                  key={player.id} 
-                  className={`transition-all duration-500 ease-in-out h-[52px] ${
-                    index === stats.length - 1 ? '' : 'border-b border-neutral-800'
-                  } ${
-                    player.isNew 
-                      ? 'bg-yellow-900/20 border-l-2 border-l-yellow-500 shadow-md' 
-                      : 'hover:bg-neutral-800/50'
-                  }`}
-                  style={{
-                    animation: player.isNew ? 'slideDown 0.5s ease-out' : undefined
-                  }}
-                >
-                <TableCell className="font-medium text-white truncate">{player.name}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={getTeamColor(player.team)}>
-                    {player.team}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={getPositionColor(player.position)}>
-                    {player.position}
-                  </Badge>
-                </TableCell>
-                  <TableCell className="text-right font-semibold text-white">{player.points}</TableCell>
-                  <TableCell className="text-right text-neutral-300">{player.rebounds}</TableCell>
-                  <TableCell className="text-right text-neutral-300">{player.assists}</TableCell>
-                  <TableCell className="text-right text-neutral-300">{player.steals}</TableCell>
-                  <TableCell className="text-right text-neutral-300">{player.blocks}</TableCell>
-                  <TableCell className="text-right text-neutral-300">{player.fg_percentage}%</TableCell>
-                  <TableCell className="text-right text-neutral-300">{player.three_point_percentage}%</TableCell>
-                  <TableCell className="text-right text-neutral-300">{player.minutes}</TableCell>
-                  <TableCell className="text-right text-neutral-300">{player.fouls}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                <TableBody>
+                  {(() => {
+                    const getTeamMeta = (abbr: string) => NBA_TEAMS.find(t => t.abbreviation === abbr)
+                    const teamOrder = Array.from(new Set(stats.map(s => s.team)))
+                    const teamToPlayers = teamOrder.reduce((acc: Record<string, PlayerStats[]>, team) => {
+                      acc[team] = stats.filter(s => s.team === team)
+                      return acc
+                    }, {})
+
+                    return teamOrder.map(team => {
+                      const meta = getTeamMeta(team)
+                      const fullName = meta ? `${meta.city} ${meta.name}` : team
+                      const logo = meta?.logo
+                      return (
+                        <Fragment key={team}>
+                          {/* Team separator row with full name and logo */}
+                          <TableRow className="bg-neutral-950/60">
+                            <TableCell colSpan={12} className="py-1.5">
+                              <div className="flex items-center gap-2">
+                                {logo && (
+                                  <img src={logo} alt={`${fullName} logo`} className="h-4 w-4 object-contain" />
+                                )}
+                                <span className="text-xs text-white font-medium">{fullName}</span>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+
+                          {teamToPlayers[team].map((player, idx) => (
+                            <TableRow 
+                              key={player.id}
+                              className={`transition-all duration-500 ease-in-out min-h-[44px] ${
+                                idx === teamToPlayers[team].length - 1 ? '' : 'border-b border-neutral-800'
+                              } ${
+                                player.isNew 
+                                  ? 'bg-yellow-900/20 border-l-2 border-l-yellow-500 shadow-md' 
+                                  : 'hover:bg-neutral-800/50'
+                              }`}
+                              style={{
+                                animation: player.isNew ? 'slideDown 0.5s ease-out' : undefined
+                              }}
+                            >
+                              <TableCell className="font-medium text-white text-xs pr-2 whitespace-normal break-words leading-tight align-top" title={player.name}>{player.name}</TableCell>
+                              <TableCell className="pl-1">
+                                <Badge variant="outline" className={`${getTeamColor(player.team)} text-[10px] py-0.5 px-1`}>
+                                  {player.team}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={`${getPositionColor(player.position)} text-[10px] py-0.5 px-1`}>
+                                  {player.position}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right font-semibold text-white text-xs">{player.points}</TableCell>
+                              <TableCell className="text-right text-neutral-300 text-xs">{player.rebounds}</TableCell>
+                              <TableCell className="text-right text-neutral-300 text-xs">{player.assists}</TableCell>
+                              <TableCell className="text-right text-neutral-300 text-xs">{player.steals}</TableCell>
+                              <TableCell className="text-right text-neutral-300 text-xs">{player.blocks}</TableCell>
+                              <TableCell className="text-right text-neutral-300 text-xs">{player.fg_percentage}%</TableCell>
+                              <TableCell className="text-right text-neutral-300 text-xs">{player.three_point_percentage}%</TableCell>
+                              <TableCell className="text-right text-neutral-300 text-xs">{player.minutes}</TableCell>
+                              <TableCell className="text-right text-neutral-300 text-xs">{player.fouls}</TableCell>
+                            </TableRow>
+                          ))}
+                        </Fragment>
+                      )
+                    })
+                  })()}
+                </TableBody>
+              </Table>
+              </div>
+            </ScrollArea>
+          </div>
         </div>
       </div>
       

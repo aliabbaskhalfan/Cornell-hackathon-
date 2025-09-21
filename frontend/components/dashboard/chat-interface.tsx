@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Mic, MicOff, Send, Bot, User } from 'lucide-react'
+import { api } from '@/lib/api'
 
 interface Message {
   id: string
@@ -52,27 +53,42 @@ export function ChatInterface() {
     setInputValue('')
     setIsLoading(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "Based on the current stats, LeBron is having a great game with 28 points and 8 rebounds!",
-        "Stephen Curry is shooting 42.1% from three-point range tonight - that's excellent!",
-        "Giannis is dominating in the paint with 35 points and 12 rebounds.",
-        "The Lakers are looking strong with their current performance.",
-        "That's an interesting question about the game strategy. Let me analyze the current stats...",
-        "Looking at the player matchups, I can see some interesting patterns emerging."
-      ]
+    try {
+      // Preferences and persona mapping
+      const rawPrefs = (typeof window !== 'undefined') ? localStorage.getItem('user-preferences') : null
+      let preferences: any = {}
+      try { preferences = rawPrefs ? JSON.parse(rawPrefs) : {} } catch { preferences = {} }
+      const persona: 'passionate' | 'nerdy' = (Number(preferences?.energyLevel) > 70) ? 'passionate' : 'nerdy'
+
+      const response = await api.processVoiceQuery(
+        userMessage.content,
+        undefined,
+        persona,
+        { preferences }
+      )
+
+      const text = (response?.response && response.response.text) ? response.response.text : response?.response
+      const answer = typeof text === 'string' ? text : 'Sorry, I could not parse the answer.'
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: responses[Math.floor(Math.random() * responses.length)],
+        content: answer,
         timestamp: new Date()
       }
 
       setMessages(prev => [...prev, assistantMessage])
+    } catch (e) {
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: "I'm having trouble processing that right now. Please try again.",
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, assistantMessage])
+    } finally {
       setIsLoading(false)
-    }, 1500)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

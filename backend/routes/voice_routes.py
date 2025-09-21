@@ -7,6 +7,34 @@ logger = logging.getLogger(__name__)
 
 voice_service = VoiceService()
 
+@voice_bp.route('/', methods=['GET'])
+def voice_health():
+    """Health/info endpoint for voice API (GET-friendly)."""
+    try:
+        personas = voice_service.get_available_personas()
+        return jsonify({
+            "success": True,
+            "message": "Voice API is healthy. Use POST to this endpoint to get a Gemini answer and TTS.",
+            "personas": personas,
+            "usage": {
+                "method": "POST",
+                "path": "/api/voice",
+                "body": {
+                    "transcript": "your question",
+                    "game_id": "lakers_trailblazers_20250413",
+                    "persona": "passionate",
+                    "user_context": {"interests": ["lakers"], "preferences": {"brevity": "short"}}
+                }
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error in voice health: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@voice_bp.route('', methods=['GET'])
+def voice_health_no_slash():
+    return voice_health()
+
 @voice_bp.route('/', methods=['POST'])
 def process_voice_query():
     """Process voice query and return response with audio"""
@@ -15,7 +43,15 @@ def process_voice_query():
         transcript = data.get('transcript')
         game_id = data.get('game_id')
         persona = data.get('persona', 'passionate')
-        user_context = data.get('user_context')
+        user_context = data.get('user_context') or {}
+        # Attach user_id from header when missing for persistence
+        try:
+            if 'user_id' not in user_context:
+                user_id = request.headers.get('X-User-Id') or request.args.get('user_id')
+                if user_id:
+                    user_context['user_id'] = user_id
+        except Exception:
+            pass
         
         if not transcript:
             return jsonify({
@@ -40,6 +76,10 @@ def process_voice_query():
             "success": False,
             "error": str(e)
         }), 500
+
+@voice_bp.route('', methods=['POST'])
+def process_voice_query_no_slash():
+    return process_voice_query()
 
 @voice_bp.route('/personas', methods=['GET'])
 def get_personas():

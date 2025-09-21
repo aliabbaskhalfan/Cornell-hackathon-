@@ -42,7 +42,10 @@ export default function ProfilePage() {
       const res = await api.saveUserPreferences(prefs)
       if (res.success) setMessage('Saved')
     } catch (e) {
-      setMessage('Failed to save')
+      const err: any = e
+      const reason = err?.response?.data?.error || err?.message || 'Unknown error'
+      console.error('Failed to save preferences:', err)
+      setMessage(`Failed to save: ${reason}`)
     } finally {
       setSaving(false)
       setTimeout(() => setMessage(null), 2000)
@@ -69,17 +72,21 @@ export default function ProfilePage() {
               <h2 className="text-xl font-semibold text-white">Favorite Team</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Select
-                  value={(prefs.favoriteTeam as NBATeam | null)?.id || ''}
+                  value={(prefs.favoriteTeam as NBATeam | null)?.id ?? 'neutral'}
                   onValueChange={(val) => {
-                    const team = NBA_TEAMS.find(t => t.id === val) || null
-                    update({ favoriteTeam: team || null })
+                    if (val === 'neutral') {
+                      update({ favoriteTeam: null })
+                    } else {
+                      const team = NBA_TEAMS.find(t => t.id === val) || null
+                      update({ favoriteTeam: team })
+                    }
                   }}
                 >
                   <SelectTrigger className="bg-neutral-700 border-neutral-600 text-white">
                     <SelectValue placeholder="Neutral fan" />
                   </SelectTrigger>
                   <SelectContent className="bg-neutral-800 text-white border-neutral-700 max-h-80 overflow-auto">
-                    <SelectItem value="">Neutral fan</SelectItem>
+                    <SelectItem value="neutral">Neutral fan</SelectItem>
                     {NBA_TEAMS.map(t => (
                       <SelectItem key={t.id} value={t.id}>{t.city} {t.name}</SelectItem>
                     ))}
@@ -148,6 +155,24 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-neutral-300 mb-2">Language</label>
+                  <Select value={prefs.language || 'en'} onValueChange={(v) => update({ language: v as any })}>
+                    <SelectTrigger className="bg-neutral-700 border-neutral-600 text-white"><SelectValue placeholder="Select language" /></SelectTrigger>
+                    <SelectContent className="bg-neutral-800 text-white border-neutral-700">
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="es">Spanish</SelectItem>
+                      <SelectItem value="fr">French</SelectItem>
+                      <SelectItem value="de">German</SelectItem>
+                      <SelectItem value="it">Italian</SelectItem>
+                      <SelectItem value="pt">Portuguese</SelectItem>
+                      <SelectItem value="hi">Hindi</SelectItem>
+                      <SelectItem value="ja">Japanese</SelectItem>
+                      <SelectItem value="ko">Korean</SelectItem>
+                      <SelectItem value="zh">Chinese</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div>
                   <label className="block text-sm text-neutral-300 mb-2">Accent</label>
                   <Select value={prefs.accent || 'american'} onValueChange={(v) => update({ accent: v as any })}>

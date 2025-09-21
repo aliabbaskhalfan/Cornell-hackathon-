@@ -37,23 +37,30 @@ class CommentaryService:
             }
         }
     
-    def generate_commentary(self, game_id, event_type='generic', persona='passionate'):
-        """Generate commentary for a game event"""
+    def generate_commentary(self, game_id, event_type='generic', persona='passionate', play_description='', user_context=None):
+        """Generate commentary for a specific play"""
         try:
-            # Get game context
+            logger.info(f"Generating commentary for game_id={game_id}, event_type={event_type}, persona={persona}, play={play_description[:50]}...")
+            
+            # Get game context - try database first, then direct API as fallback
             game_summary = self.game_service.get_game_summary(game_id)
+            
             if not game_summary:
-                return self._get_fallback_commentary(persona)
+                logger.warning(f"No game summary found in database for {game_id}, creating minimal context")
+                # Create minimal game context for commentary generation
+                game_summary = self._create_minimal_game_context(game_id)
             
             # Get persona style
             persona_config = self.personas.get(persona, self.personas['passionate'])
             
             # Create prompt
-            prompt = self._create_commentary_prompt(game_summary, event_type, persona_config)
+            prompt = self._create_commentary_prompt(game_summary, event_type, persona_config, play_description, user_context)
+            logger.info(f"Generated prompt for Gemini: {prompt[:200]}...")
             
             # Generate with Gemini
             response = self.model.generate_content(prompt)
             commentary_text = response.text.strip()
+            logger.info(f"Gemini response: {commentary_text}")
             
             # Ensure length limit
             if len(commentary_text) > Config.MAX_COMMENTARY_LENGTH:
@@ -86,42 +93,112 @@ class CommentaryService:
             logger.error(f"Error generating commentary: {e}")
             return self._get_fallback_commentary(persona)
     
-    def _create_commentary_prompt(self, game_summary, event_type, persona_config):
+    def _create_commentary_prompt(self, game_summary, event_type, persona_config, play_description='', user_context=None):
         """Create prompt for Gemini"""
         game = game_summary['game']
         top_scorers = game_summary['top_scorers']
         
-        prompt = f"""
-        Generate a {persona_config['style']} sports commentary line for an NBA game.
-        
-        Game Context:
-        - {game['teams']['away']['name']} vs {game['teams']['home']['name']}
-        - Score: {game['teams']['away']['name']} {game['score']['away']} - {game['teams']['home']['name']} {game['score']['home']}
-        - Clock: {game['clock']}
-        - Status: {game['status']}
-        
-        Top Scorers:
-        """
-        
-        for scorer in top_scorers[:2]:
-            prompt += f"- {scorer['name']}: {scorer['points']} points\n"
-        
+        prompt = f"""You are an NBA sports commentator with a {persona_config['style']} style.
+
+Game Context:
+- {game['teams']['away']['name']} vs {game['teams']['home']['name']}
+- Score: {game['teams']['away']['name']} {game['score']['away']} - {game['teams']['home']['name']} {game['score']['home']}
+- Clock: {game['clock']}
+- Status: {game['status']}"""
+
+        if top_scorers:
+            prompt += "\n\nTop Performers:"
+            for scorer in top_scorers[:2]:
+                prompt += f"\n- {scorer['name']}: {scorer['points']} points"
+
+        if user_context:
+            if user_context.get('interests'):
+                prompt += f"\nUser interests: {', '.join(user_context['interests'])}"
+            if user_context.get('preferences'):
+                prompt += f"\nUser preferences: {user_context['preferences']}"
+
         prompt += f"""
-        
-        Event Type: {event_type}
-        Style: {persona_config['style']}
-        Tone: {persona_config['tone']}
-        
-        Generate a single, engaging commentary line (max 150 characters) that captures the current moment.
-        Use the {persona_config['style']} style and {persona_config['tone']} tone.
-        Make it sound natural and exciting for sports fans.
-        
-        Examples of this style: {', '.join(persona_config['examples'])}
-        
-        Commentary:
-        """
+
+Raw Play-by-Play Event: "{play_description}"
+
+Your task: Convert this raw play-by-play line into natural, exciting commentary that a {persona_config['style']} sports commentator would say.
+
+Style Guidelines:
+- Tone: {persona_config['tone']}
+- Examples: {', '.join(persona_config['examples'])}
+- Keep it to 1-2 sentences max
+- Make it sound natural and engaging for sports fans
+- Don't just repeat the raw data - interpret it with excitement and context
+
+Commentary:"""
         
         return prompt
+    
+    def _create_minimal_game_context(self, game_id):
+        """Create minimal game context when database lookup fails"""
+        try:
+            # Import here to avoid circular imports
+            from services.sportsdata_service import SportsDataService
+            sports_service = SportsDataService()
+            
+            # Get fresh data directly from sports service
+            game_details = sports_service.get_game_details(game_id)
+            box_score = sports_service.get_box_score(game_id)
+            
+            if not game_details:
+                # Return bare minimum for Lakers vs Trail Blazers
+                return {
+                    'game': {
+                        'teams': {
+                            'away': {'name': 'Los Angeles Lakers'},
+                            'home': {'name': 'Portland Trail Blazers'}
+                        },
+                        'score': {'away': 0, 'home': 0},
+                        'clock': '12:00',
+                        'status': 'InProgress'
+                    },
+                    'top_scorers': [],
+                    'score_difference': 0
+                }
+            
+            # Extract player stats if available
+            top_scorers = []
+            if box_score and 'Players' in box_score:
+                players = sorted(box_score['Players'], key=lambda p: p.get('Points', 0), reverse=True)
+                top_scorers = players[:3]
+            
+            return {
+                'game': {
+                    'teams': {
+                        'away': {'name': 'Los Angeles Lakers'},
+                        'home': {'name': 'Portland Trail Blazers'}
+                    },
+                    'score': {
+                        'away': game_details.get('AwayTeamScore', 0),
+                        'home': game_details.get('HomeTeamScore', 0)
+                    },
+                    'clock': f"{game_details.get('TimeRemainingMinutes', 12):02d}:{game_details.get('TimeRemainingSeconds', 0):02d}",
+                    'status': game_details.get('Status', 'InProgress')
+                },
+                'top_scorers': [{'name': p.get('Name', 'Player'), 'points': p.get('Points', 0)} for p in top_scorers],
+                'score_difference': abs(game_details.get('HomeTeamScore', 0) - game_details.get('AwayTeamScore', 0))
+            }
+        except Exception as e:
+            logger.error(f"Error creating minimal game context: {e}")
+            # Return absolute minimum
+            return {
+                'game': {
+                    'teams': {
+                        'away': {'name': 'Los Angeles Lakers'},
+                        'home': {'name': 'Portland Trail Blazers'}
+                    },
+                    'score': {'away': 0, 'home': 0},
+                    'clock': '12:00',
+                    'status': 'InProgress'
+                },
+                'top_scorers': [],
+                'score_difference': 0
+            }
     
     def _get_fallback_commentary(self, persona):
         """Return fallback commentary if generation fails"""

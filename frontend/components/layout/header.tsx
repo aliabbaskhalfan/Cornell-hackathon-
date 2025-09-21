@@ -32,7 +32,7 @@ export function Header({ onMenuClick, selectedGame }: HeaderProps) {
               <span className="text-white font-bold text-sm">🏀</span>
             </div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-              AI Sports Commentator
+              Courtside
             </h1>
           </div>
           

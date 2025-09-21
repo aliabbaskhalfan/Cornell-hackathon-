@@ -9,12 +9,14 @@ commentary_service = CommentaryService()
 
 @commentary_bp.route('/emit', methods=['POST'])
 def emit_commentary():
-    """Force generate a commentary line for testing"""
+    """Generate commentary for a specific play"""
     try:
         data = request.get_json()
         game_id = data.get('game_id')
         event_type = data.get('event_type', 'generic')
         persona = data.get('persona', 'passionate')
+        play_description = data.get('play_description', '')
+        user_context = data.get('user_context', {})
         
         if not game_id:
             return jsonify({
@@ -25,7 +27,9 @@ def emit_commentary():
         commentary = commentary_service.generate_commentary(
             game_id=game_id,
             event_type=event_type,
-            persona=persona
+            persona=persona,
+            play_description=play_description,
+            user_context=user_context
         )
         
         return jsonify({

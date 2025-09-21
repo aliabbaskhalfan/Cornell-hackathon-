@@ -111,6 +111,7 @@ class SportsDataService:
     def _get_mock_games(self):
         current = self._compute_mock_q1_state()
         clock_str = f"{current['TimeRemainingMinutes']:02d}:{current['TimeRemainingSeconds']:02d}"
+        logger.info(f"Mock games: clock={clock_str} score={current['HomeTeamScore']}-{current['AwayTeamScore']}")
         return [
             {
                 'game_id': self._mock_game_id,
@@ -275,8 +276,6 @@ class SportsDataService:
         home_score = 0
         away_score = 0
         for idx, p in enumerate(script, start=1):
-            if p['seconds_remaining'] < current_remaining:
-                continue
             pts = p['points']
             if p['team'] == self._mock_home:
                 home_score += pts
@@ -295,6 +294,7 @@ class SportsDataService:
                 'HomeTeamScore': home_score,
                 'AwayTeamScore': away_score,
             })
+        logger.info(f"Mock PBP: emitted={len(emitted)} first_clock={emitted[0]['Clock'] if emitted else 'n/a'} last_clock={emitted[-1]['Clock'] if emitted else 'n/a'}")
         return emitted
 
     def _compute_mock_q1_state(self):
@@ -309,7 +309,8 @@ class SportsDataService:
         home = 0
         away = 0
         for p in self._q1_play_script:
-            if p['seconds_remaining'] >= remaining and p['points'] > 0:
+            # Score plays that have already happened (time elapsed past their clock time)
+            if p['seconds_remaining'] > remaining and p['points'] > 0:
                 if p['team'] == self._mock_home:
                     home += p['points']
                 elif p['team'] == self._mock_away:
@@ -319,6 +320,13 @@ class SportsDataService:
             'TimeRemainingSeconds': rem_s,
             'HomeTeamScore': home,
             'AwayTeamScore': away
+        }
+
+    def reset_mock_timer(self):
+        """Reset the mock game's internal clock to start from Q1 12:00 now."""
+        self._mock_game_start = datetime.now()
+        return {
+            'reset_at': self._mock_game_start.isoformat()
         }
 
     def _build_q1_mock_script(self):
@@ -351,8 +359,8 @@ class SportsDataService:
                 return 0
             if 'free throw' in text:
                 return 1 if 'miss' not in text else 0
-            if '3pt' in text or '3\'' in desc:
-                # treat made 3PT (without MISS) as 3
+            # Only treat explicit 3PT mentions as three-pointers (avoid matching distances like 3')
+            if '3pt' in text or ' 3-pt' in text or ' 3 pt' in text:
                 return 3
             if 'dunk' in text or 'layup' in text or 'jump shot' in text or 'hook' in text:
                 return 2

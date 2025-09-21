@@ -1,7 +1,7 @@
 # Onboarding Flow Documentation
 
 ## Overview
-This document provides comprehensive information about the onboarding flow implementation for the AI Sports Commentator application. This documentation is designed to help developers understand the structure, components, and integration points when merging with the dashboard page.
+This document provides comprehensive information about the onboarding flow implementation for the Courtside application. This documentation is designed to help developers understand the structure, components, and integration points when merging with the dashboard page.
 
 ## File Structure
 

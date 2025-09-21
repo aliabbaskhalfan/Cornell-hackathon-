@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Quick Setup Script - No Python version check
-echo "🏀 Quick setup for AI Sports Commentator..."
+echo "🏀 Quick setup for Courtside..."
 
 # Setup backend
 echo "📦 Setting up backend..."

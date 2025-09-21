@@ -1,4 +1,4 @@
-# 🏀 AI Sports Commentator - Setup Guide
+# 🏀 Courtside - Setup Guide
 
 A real-time AI-powered sports commentary application with customizable personas, voice Q&A, and live game updates.
 

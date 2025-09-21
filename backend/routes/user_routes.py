@@ -17,6 +17,7 @@ def _get_user_id():
 def get_preferences():
     try:
         user_id = _get_user_id()
+        logger.info(f"GET /preferences for user_id={user_id}")
         user = db.users.find_one({'_id': user_id})
         preferences = user.get('preferences') if user else None
         return jsonify({
@@ -25,7 +26,7 @@ def get_preferences():
             'preferences': preferences
         })
     except Exception as e:
-        logger.error(f"Error getting preferences: {e}")
+        logger.exception(f"Error getting preferences for user_id={user_id}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -33,21 +34,29 @@ def get_preferences():
 def save_preferences():
     try:
         user_id = _get_user_id()
-        data = request.get_json() or {}
+        data = request.get_json(silent=True) or {}
         preferences = data.get('preferences') or {}
+        logger.info(f"POST /preferences for user_id={user_id} payload_keys={list(preferences.keys())}")
 
-        update_doc = {
-            '_id': user_id,
+        # Only set mutable fields; _id is part of filter
+        set_doc = {
             'preferences': preferences,
             'updated_at': datetime.utcnow()
         }
 
-        # Use upsert to create/update
-        db.users.update_one({'_id': user_id}, {'$set': update_doc}, upsert=True)
-
+        # Use upsert to create/update. On insert, include _id via $setOnInsert
+        result = db.users.update_one(
+            {'_id': user_id},
+            {
+                '$set': set_doc,
+                '$setOnInsert': {'_id': user_id}
+            },
+            upsert=True
+        )
+        logger.info(f"Preferences saved for user_id={user_id} matched={result.matched_count} modified={result.modified_count} upserted_id={result.upserted_id}")
         return jsonify({'success': True, 'user_id': user_id})
     except Exception as e:
-        logger.error(f"Error saving preferences: {e}")
+        logger.exception(f"Error saving preferences for user_id={user_id}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

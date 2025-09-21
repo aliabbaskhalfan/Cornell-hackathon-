@@ -2,6 +2,7 @@ import re
 import logging
 import google.generativeai as genai
 from services.game_service import GameService
+from services.context_service import ContextService
 from services.commentary_service import CommentaryService
 from services.tts_service import TTSService
 from config import Config
@@ -13,6 +14,7 @@ class VoiceService:
         self.game_service = GameService()
         self.commentary_service = CommentaryService()
         self.tts_service = TTSService()
+        self.context_service = ContextService()
         
         # Initialize Gemini AI
         if Config.GEMINI_API_KEY:
@@ -113,23 +115,42 @@ class VoiceService:
             context_parts.append(f"Your communication style should be {persona_config['style']}.")
             context_parts.append("Keep your response concise and engaging (2-3 sentences max).")
             
-            # Add user context if provided
-            if user_context:
-                if user_context.get('interests'):
-                    context_parts.append(f"User interests: {', '.join(user_context['interests'])}")
-                if user_context.get('fantasy_info'):
-                    context_parts.append(f"User fantasy context: {user_context['fantasy_info']}")
-                if user_context.get('preferences'):
-                    context_parts.append(f"User preferences: {user_context['preferences']}")
+            # Merge persisted user context if a user_id is present
+            persisted = None
+            if isinstance(user_context, dict) and user_context.get('user_id'):
+                persisted = self.context_service.get_user_context(user_context['user_id'])
+                # Update persisted with incoming deltas (non-destructive)
+                updates = {k: v for k, v in user_context.items() if k in ['interests', 'preferences', 'fantasy_info', 'persona']}
+                if updates:
+                    self.context_service.upsert_user_context(user_context['user_id'], updates)
+
+            effective_user_ctx = {**(persisted or {}), **(user_context or {})}
+            if effective_user_ctx:
+                if effective_user_ctx.get('interests'):
+                    context_parts.append(f"User interests: {', '.join(effective_user_ctx['interests'])}")
+                if effective_user_ctx.get('fantasy_info'):
+                    context_parts.append(f"User fantasy context: {effective_user_ctx['fantasy_info']}")
+                if effective_user_ctx.get('preferences'):
+                    context_parts.append(f"User preferences: {effective_user_ctx['preferences']}")
             
             # Add game context if available
             if game_id:
-                game_summary = self.game_service.get_game_summary(game_id)
-                if game_summary:
-                    game = game_summary['game']
-                    context_parts.append(f"Current game: {game['teams']['away']['name']} vs {game['teams']['home']['name']}")
-                    context_parts.append(f"Score: {game['teams']['away']['name']} {game['score']['away']}, {game['teams']['home']['name']} {game['score']['home']}")
-                    context_parts.append(f"Game status: {game['status']}")
+                game_ctx = self.context_service.get_game_context(game_id)
+                if game_ctx:
+                    sb = game_ctx.get('scoreboard', {})
+                    context_parts.append(f"Current game: {sb.get('away')} @ {sb.get('home')}")
+                    context_parts.append(f"Score: {sb.get('away_score')} - {sb.get('home_score')} | Q{sb.get('quarter')} {sb.get('clock')}")
+                    leaders = game_ctx.get('leaders', {})
+                    if leaders:
+                        la = leaders.get('away', {})
+                        lh = leaders.get('home', {})
+                        if la.get('name'):
+                            context_parts.append(f"Away leader: {la.get('name')} {la.get('points')} pts")
+                        if lh.get('name'):
+                            context_parts.append(f"Home leader: {lh.get('name')} {lh.get('points')} pts")
+                    recent = game_ctx.get('recent_plays') or []
+                    if recent:
+                        context_parts.append("Recent plays: " + "; ".join([f"{p.get('clock')} {p.get('team')}: {p.get('description')}" for p in recent]))
             
             # Build the prompt
             context = "\n".join(context_parts)
