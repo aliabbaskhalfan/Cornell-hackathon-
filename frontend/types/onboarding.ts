@@ -22,6 +22,7 @@ export interface OnboardingData {
   voiceSpeed: number; // 0-100
   accent: 'american' | 'british' | 'australian' | 'southern' | 'new-york';
   commentaryFrequency: 'every-play' | 'key-moments' | 'major-events';
+  language?: 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'hi' | 'ja' | 'ko' | 'zh';
   customInstructions: string;
   liveQA: boolean;
   backgroundAudio: boolean;

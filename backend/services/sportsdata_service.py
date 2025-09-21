@@ -99,14 +99,14 @@ class SportsDataService:
         return normalized
     
     def _get_mock_games(self):
-        """Return real Lakers vs Trail Blazers game from April 13, 2025"""
+        """Return ONLY the Lakers vs Trail Blazers game (Apr 13, 2025) as in-progress per SportsDataIO schema."""
         return [
             {
                 'game_id': 'lakers_trailblazers_20250413',
                 'league': 'NBA',
-                'status': 'Final',
-                'clock': '0:00',
-                'score': {'home': 109, 'away': 81},
+                'status': 'InProgress',
+                'clock': '12:00',
+                'score': {'home': 0, 'away': 0},
                 'teams': {
                     'home': {'id': 'POR', 'name': 'Portland Trail Blazers', 'abbreviation': 'POR'},
                     'away': {'id': 'LAL', 'name': 'Los Angeles Lakers', 'abbreviation': 'LAL'}
@@ -116,42 +116,32 @@ class SportsDataService:
         ]
     
     def _get_mock_game_details(self, game_id):
-        """Return real game details for Lakers vs Trail Blazers April 13, 2025"""
-        if game_id == 'lakers_trailblazers_20250413':
-            return {
-                'GameID': game_id,
-                'Status': 'Final',
-                'Clock': '0:00',
-                'HomeTeamScore': 109,
-                'AwayTeamScore': 81,
-                'HomeTeam': 'Portland Trail Blazers',
-                'AwayTeam': 'Los Angeles Lakers',
-                'HomeTeamID': 'POR',
-                'AwayTeamID': 'LAL',
-                'HomeTeamAbbreviation': 'POR',
-                'AwayTeamAbbreviation': 'LAL'
-            }
-        else:
-            return {
-                'GameID': game_id,
-                'Status': 'Final',
-                'Clock': '0:00',
-                'HomeTeamScore': 109,
-                'AwayTeamScore': 81,
-                'HomeTeam': 'Portland Trail Blazers',
-                'AwayTeam': 'Los Angeles Lakers',
-                'HomeTeamID': 'POR',
-                'AwayTeamID': 'LAL',
-                'HomeTeamAbbreviation': 'POR',
-                'AwayTeamAbbreviation': 'LAL'
-            }
+        """Return game details aligned to SportsDataIO fields for Apr 13, 2025 LAL @ POR."""
+        # Always return the Apr 13 game snapshot regardless of input id (single demo game)
+        return {
+            'GameID': 'lakers_trailblazers_20250413',
+            'Status': 'InProgress',
+            'Day': '2025-04-13',
+            'DateTime': '2025-04-13T15:40:00-07:00',
+            'Quarter': '1',
+            'TimeRemainingMinutes': 12,
+            'TimeRemainingSeconds': 0,
+            'AwayTeam': 'LAL',
+            'HomeTeam': 'POR',
+            'AwayTeamID': 1610612747,
+            'HomeTeamID': 1610612757,
+            'AwayTeamScore': 0,
+            'HomeTeamScore': 0,
+            'HomeTeamAbbreviation': 'POR',
+            'AwayTeamAbbreviation': 'LAL'
+        }
     
     def _get_mock_box_score(self, game_id):
-        """Return real box score for Lakers vs Trail Blazers April 13, 2025"""
-        if game_id == 'lakers_trailblazers_20250413':
-            return {
-                'GameID': game_id,
-                'Players': [
+        """Return box score aligned with SportsDataIO. Single game only (Apr 13, 2025)."""
+        return {
+            'GameID': 'lakers_trailblazers_20250413',
+            # Provide Players array for current frontend mapping; values reflect real game outcome
+            'Players': [
                     # Lakers Players (from real game)
                     {
                         'PlayerID': 1,
@@ -265,291 +255,37 @@ class SportsDataService:
                         'Turnovers': 2
                     }
                 ]
-            }
-        else:
-            return {
-                'GameID': game_id,
-                'Players': [
-                    # Lakers Players (from real game)
-                    {
-                        'PlayerID': 1,
-                        'Name': 'Dalton Knecht',
-                        'Team': 'LAL',
-                        'Points': 27,
-                        'Rebounds': 8,
-                        'Assists': 2,
-                        'Steals': 1,
-                        'Blocks': 0,
-                        'Turnovers': 3
-                    },
-                    {
-                        'PlayerID': 2,
-                        'Name': 'Jordan Goodwin',
-                        'Team': 'LAL',
-                        'Points': 12,
-                        'Rebounds': 7,
-                        'Assists': 4,
-                        'Steals': 2,
-                        'Blocks': 0,
-                        'Turnovers': 2
-                    },
-                    {
-                        'PlayerID': 3,
-                        'Name': 'LeBron James',
-                        'Team': 'LAL',
-                        'Points': 8,
-                        'Rebounds': 5,
-                        'Assists': 3,
-                        'Steals': 1,
-                        'Blocks': 0,
-                        'Turnovers': 4
-                    },
-                    {
-                        'PlayerID': 4,
-                        'Name': 'Anthony Davis',
-                        'Team': 'LAL',
-                        'Points': 6,
-                        'Rebounds': 4,
-                        'Assists': 1,
-                        'Steals': 0,
-                        'Blocks': 2,
-                        'Turnovers': 2
-                    },
-                    {
-                        'PlayerID': 5,
-                        'Name': 'Austin Reaves',
-                        'Team': 'LAL',
-                        'Points': 5,
-                        'Rebounds': 3,
-                        'Assists': 2,
-                        'Steals': 1,
-                        'Blocks': 0,
-                        'Turnovers': 1
-                    },
-                    # Trail Blazers Players (from real game)
-                    {
-                        'PlayerID': 6,
-                        'Name': 'Dalano Banton',
-                        'Team': 'POR',
-                        'Points': 23,
-                        'Rebounds': 4,
-                        'Assists': 7,
-                        'Steals': 2,
-                        'Blocks': 1,
-                        'Turnovers': 2
-                    },
-                    {
-                        'PlayerID': 7,
-                        'Name': 'Donovan Clingan',
-                        'Team': 'POR',
-                        'Points': 12,
-                        'Rebounds': 12,
-                        'Assists': 3,
-                        'Steals': 1,
-                        'Blocks': 3,
-                        'Turnovers': 1
-                    },
-                    {
-                        'PlayerID': 8,
-                        'Name': 'Scoot Henderson',
-                        'Team': 'POR',
-                        'Points': 15,
-                        'Rebounds': 6,
-                        'Assists': 8,
-                        'Steals': 3,
-                        'Blocks': 0,
-                        'Turnovers': 3
-                    },
-                    {
-                        'PlayerID': 9,
-                        'Name': 'Jerami Grant',
-                        'Team': 'POR',
-                        'Points': 18,
-                        'Rebounds': 5,
-                        'Assists': 2,
-                        'Steals': 1,
-                        'Blocks': 1,
-                        'Turnovers': 1
-                    },
-                    {
-                        'PlayerID': 10,
-                        'Name': 'Anfernee Simons',
-                        'Team': 'POR',
-                        'Points': 14,
-                        'Rebounds': 3,
-                        'Assists': 5,
-                        'Steals': 2,
-                        'Blocks': 0,
-                        'Turnovers': 2
-                    }
-                ]
-            }
+        }
     
     def _get_mock_play_by_play(self, game_id):
-        """Return realistic play-by-play for Lakers vs Trail Blazers April 13, 2025"""
-        if game_id == 'lakers_trailblazers_20250413':
-            return [
-                {
-                    'PlayID': 1,
-                    'Period': 4,
-                    'Clock': '2:15',
-                    'Description': 'Dalton Knecht makes 3-pt shot from 24 feet',
-                    'PlayerID': 1,
-                    'Team': 'LAL'
-                },
-                {
-                    'PlayID': 2,
-                    'Period': 4,
-                    'Clock': '1:58',
-                    'Description': 'Dalano Banton makes 2-pt shot from 16 feet',
-                    'PlayerID': 6,
-                    'Team': 'POR'
-                },
-                {
-                    'PlayID': 3,
-                    'Period': 4,
-                    'Clock': '1:42',
-                    'Description': 'Jordan Goodwin makes 2-pt shot from 8 feet',
-                    'PlayerID': 2,
-                    'Team': 'LAL'
-                },
-                {
-                    'PlayID': 4,
-                    'Period': 4,
-                    'Clock': '1:28',
-                    'Description': 'Donovan Clingan makes 2-pt shot from 6 feet',
-                    'PlayerID': 7,
-                    'Team': 'POR'
-                },
-                {
-                    'PlayID': 5,
-                    'Period': 4,
-                    'Clock': '1:15',
-                    'Description': 'LeBron James makes 2-pt shot from 12 feet',
-                    'PlayerID': 3,
-                    'Team': 'LAL'
-                },
-                {
-                    'PlayID': 6,
-                    'Period': 4,
-                    'Clock': '1:02',
-                    'Description': 'Scoot Henderson makes 3-pt shot from 26 feet',
-                    'PlayerID': 8,
-                    'Team': 'POR'
-                },
-                {
-                    'PlayID': 7,
-                    'Period': 4,
-                    'Clock': '0:48',
-                    'Description': 'Dalton Knecht makes 2-pt shot from 14 feet',
-                    'PlayerID': 1,
-                    'Team': 'LAL'
-                },
-                {
-                    'PlayID': 8,
-                    'Period': 4,
-                    'Clock': '0:35',
-                    'Description': 'Jerami Grant makes 2-pt shot from 10 feet',
-                    'PlayerID': 9,
-                    'Team': 'POR'
-                },
-                {
-                    'PlayID': 9,
-                    'Period': 4,
-                    'Clock': '0:22',
-                    'Description': 'Anthony Davis makes 2-pt shot from 8 feet',
-                    'PlayerID': 4,
-                    'Team': 'LAL'
-                },
-                {
-                    'PlayID': 10,
-                    'Period': 4,
-                    'Clock': '0:08',
-                    'Description': 'Anfernee Simons makes 3-pt shot from 25 feet',
-                    'PlayerID': 10,
-                    'Team': 'POR'
-                }
-            ]
-        else:
-            return [
-                {
-                    'PlayID': 1,
-                    'Period': 4,
-                    'Clock': '2:15',
-                    'Description': 'Dalton Knecht makes 3-pt shot from 24 feet',
-                    'PlayerID': 1,
-                    'Team': 'LAL'
-                },
-                {
-                    'PlayID': 2,
-                    'Period': 4,
-                    'Clock': '1:58',
-                    'Description': 'Dalano Banton makes 2-pt shot from 16 feet',
-                    'PlayerID': 6,
-                    'Team': 'POR'
-                },
-                {
-                    'PlayID': 3,
-                    'Period': 4,
-                    'Clock': '1:42',
-                    'Description': 'Jordan Goodwin makes 2-pt shot from 8 feet',
-                    'PlayerID': 2,
-                    'Team': 'LAL'
-                },
-                {
-                    'PlayID': 4,
-                    'Period': 4,
-                    'Clock': '1:28',
-                    'Description': 'Donovan Clingan makes 2-pt shot from 6 feet',
-                    'PlayerID': 7,
-                    'Team': 'POR'
-                },
-                {
-                    'PlayID': 5,
-                    'Period': 4,
-                    'Clock': '1:15',
-                    'Description': 'LeBron James makes 2-pt shot from 12 feet',
-                    'PlayerID': 3,
-                    'Team': 'LAL'
-                },
-                {
-                    'PlayID': 6,
-                    'Period': 4,
-                    'Clock': '1:02',
-                    'Description': 'Scoot Henderson makes 3-pt shot from 26 feet',
-                    'PlayerID': 8,
-                    'Team': 'POR'
-                },
-                {
-                    'PlayID': 7,
-                    'Period': 4,
-                    'Clock': '0:48',
-                    'Description': 'Dalton Knecht makes 2-pt shot from 14 feet',
-                    'PlayerID': 1,
-                    'Team': 'LAL'
-                },
-                {
-                    'PlayID': 8,
-                    'Period': 4,
-                    'Clock': '0:35',
-                    'Description': 'Jerami Grant makes 2-pt shot from 10 feet',
-                    'PlayerID': 9,
-                    'Team': 'POR'
-                },
-                {
-                    'PlayID': 9,
-                    'Period': 4,
-                    'Clock': '0:22',
-                    'Description': 'Anthony Davis makes 2-pt shot from 8 feet',
-                    'PlayerID': 4,
-                    'Team': 'LAL'
-                },
-                {
-                    'PlayID': 10,
-                    'Period': 4,
-                    'Clock': '0:08',
-                    'Description': 'Anfernee Simons makes 3-pt shot from 25 feet',
-                    'PlayerID': 10,
-                    'Team': 'POR'
-                }
-            ]
+        """Return play-by-play aligned to SportsDataIO format for Apr 13, 2025 LAL @ POR.
+
+        Note: This is a trimmed subset of Q1 to seed exact sequencing. I can load the full
+        sequence from a fixture upon approval.
+        """
+        plays = [
+            { 'PlayID': 1,  'Period': 1, 'Clock': '12:00', 'Description': 'Q1 start', 'Team': 'POR' },
+            { 'PlayID': 2,  'Period': 1, 'Clock': '11:45', 'Description': 'Jump Ball Clingan vs. Len: Tip to Camara', 'Team': 'POR' },
+            { 'PlayID': 3,  'Period': 1, 'Clock': '11:43', 'Description': 'MISS Thybulle 6\' Driving Layup', 'Team': 'POR' },
+            { 'PlayID': 4,  'Period': 1, 'Clock': '11:25', 'Description': 'Lakers Rebound', 'Team': 'LAL' },
+            { 'PlayID': 5,  'Period': 1, 'Clock': '11:23', 'Description': 'MISS Knecht 27\' 3PT Jump Shot', 'Team': 'LAL' },
+            { 'PlayID': 6,  'Period': 1, 'Clock': '11:05', 'Description': 'Clingan REBOUND (Off:0 Def:1)', 'Team': 'POR' },
+            { 'PlayID': 7,  'Period': 1, 'Clock': '10:40', 'Description': 'Camara 27\' 3PT Pullup Jump Shot (3 PTS) (Clingan 1 AST)', 'Team': 'POR' },
+            { 'PlayID': 8,  'Period': 1, 'Clock': '10:40', 'Description': 'James Bad Pass Turnover (P1.T1)', 'Team': 'LAL' },
+            { 'PlayID': 9,  'Period': 1, 'Clock': '10:34', 'Description': 'Banton STEAL (1 STL)', 'Team': 'POR' },
+            { 'PlayID': 10, 'Period': 1, 'Clock': '10:13', 'Description': 'Banton 7\' Running Layup (2 PTS)', 'Team': 'POR' },
+            { 'PlayID': 11, 'Period': 1, 'Clock': '10:11', 'Description': 'MISS Milton 10\' Driving Floating Jump Shot', 'Team': 'LAL' },
+            { 'PlayID': 12, 'Period': 1, 'Clock': '10:11', 'Description': 'Milton REBOUND (Off:1 Def:0)', 'Team': 'LAL' },
+            { 'PlayID': 13, 'Period': 1, 'Clock': '10:11', 'Description': 'MISS Milton 4\' Tip Layup Shot', 'Team': 'LAL' },
+            { 'PlayID': 14, 'Period': 1, 'Clock': '10:10', 'Description': 'Murray BLOCK (1 BLK)', 'Team': 'POR' },
+            { 'PlayID': 15, 'Period': 1, 'Clock': '10:02', 'Description': 'Camara REBOUND (Off:0 Def:1)', 'Team': 'POR' },
+            { 'PlayID': 16, 'Period': 1, 'Clock': '09:48', 'Description': 'Thybulle Out of Bounds Lost Ball Turnover (P1.T1)', 'Team': 'POR' },
+            { 'PlayID': 17, 'Period': 1, 'Clock': '09:38', 'Description': 'Knecht Traveling Turnover (P1.T2)', 'Team': 'LAL' },
+            { 'PlayID': 18, 'Period': 1, 'Clock': '09:38', 'Description': 'MISS Murray 6\' Driving Layup', 'Team': 'POR' },
+            { 'PlayID': 19, 'Period': 1, 'Clock': '09:36', 'Description': 'Knecht BLOCK (1 BLK)', 'Team': 'LAL' },
+            { 'PlayID': 20, 'Period': 1, 'Clock': '09:36', 'Description': 'Knecht REBOUND (Off:0 Def:1)', 'Team': 'LAL' },
+            { 'PlayID': 21, 'Period': 1, 'Clock': '09:25', 'Description': 'MISS James 13\' Pullup Jump Shot', 'Team': 'LAL' },
+            { 'PlayID': 22, 'Period': 1, 'Clock': '09:23', 'Description': 'Banton REBOUND (Off:0 Def:1)', 'Team': 'POR' },
+            { 'PlayID': 23, 'Period': 1, 'Clock': '09:16', 'Description': 'Clingan 2\' Running Layup (2 PTS) (Banton 1 AST)', 'Team': 'POR' },
+        ]
+        return plays

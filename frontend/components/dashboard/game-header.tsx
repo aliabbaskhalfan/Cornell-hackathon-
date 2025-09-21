@@ -1,6 +1,7 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
+import { getNbaTeamLogo } from '@/lib/utils'
 
 interface Team {
   name: string
@@ -19,9 +20,6 @@ interface GameHeaderProps {
 }
 
 export function GameHeader({ homeTeam, awayTeam, gameStatus, quarter, timeRemaining }: GameHeaderProps) {
-  const getTeamLogo = (teamCode: string) => {
-    return `https://cdn.nba.com/logos/nba/${teamCode === 'GSW' ? '1610612744' : teamCode === 'LAL' ? '1610612747' : '1610612744'}/primary/L/logo.svg`
-  }
 
   return (
     <div className="bg-neutral-900 p-6">
@@ -30,11 +28,11 @@ export function GameHeader({ homeTeam, awayTeam, gameStatus, quarter, timeRemain
           {/* Away Team */}
           <div className="flex items-center space-x-4">
             <img 
-              src={getTeamLogo(awayTeam.shortName)} 
+              src={getNbaTeamLogo(awayTeam.shortName)} 
               alt={awayTeam.shortName}
               className="w-20 h-20"
               onError={(e) => {
-                e.currentTarget.src = `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="#3B82F6"/><text x="40" y="50" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${awayTeam.shortName}</text></svg>`)}`
+                e.currentTarget.src = getNbaTeamLogo(awayTeam.shortName)
               }}
             />
             <div>
@@ -59,11 +57,11 @@ export function GameHeader({ homeTeam, awayTeam, gameStatus, quarter, timeRemain
               <p className="text-sm text-neutral-400">{homeTeam.record}</p>
             </div>
             <img 
-              src={getTeamLogo(homeTeam.shortName)} 
+              src={getNbaTeamLogo(homeTeam.shortName)} 
               alt={homeTeam.shortName}
               className="w-20 h-20"
               onError={(e) => {
-                e.currentTarget.src = `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="#EF4444"/><text x="40" y="50" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${homeTeam.shortName}</text></svg>`)}`
+                e.currentTarget.src = getNbaTeamLogo(homeTeam.shortName)
               }}
             />
           </div>

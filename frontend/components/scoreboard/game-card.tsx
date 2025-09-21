@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { formatScore, getGameStatus, getStatusColor } from '@/lib/utils'
+import { formatScore, getGameStatus, getStatusColor, getNbaTeamLogo, getNbaTeamColors } from '@/lib/utils'
 import { Clock, Users } from 'lucide-react'
 
 interface Game {
@@ -62,11 +62,14 @@ export function GameCard({ game, onClick }: GameCardProps) {
           {/* Away Team */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xs">
-                  {game.teams.away.abbreviation.charAt(0)}
-                </span>
-              </div>
+              <img
+                src={getNbaTeamLogo(game.teams.away.abbreviation)}
+                alt={game.teams.away.abbreviation}
+                className="w-8 h-8 rounded-full bg-white object-contain p-1"
+                onError={(e) => {
+                  e.currentTarget.src = getNbaTeamLogo(game.teams.away.abbreviation)
+                }}
+              />
               <div>
                 <p className="font-medium text-slate-900 dark:text-white">
                   {game.teams.away.name}
@@ -84,11 +87,14 @@ export function GameCard({ game, onClick }: GameCardProps) {
           {/* Home Team */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xs">
-                  {game.teams.home.abbreviation.charAt(0)}
-                </span>
-              </div>
+              <img
+                src={getNbaTeamLogo(game.teams.home.abbreviation)}
+                alt={game.teams.home.abbreviation}
+                className="w-8 h-8 rounded-full bg-white object-contain p-1"
+                onError={(e) => {
+                  e.currentTarget.src = getNbaTeamLogo(game.teams.home.abbreviation)
+                }}
+              />
               <div>
                 <p className="font-medium text-slate-900 dark:text-white">
                   {game.teams.home.name}
