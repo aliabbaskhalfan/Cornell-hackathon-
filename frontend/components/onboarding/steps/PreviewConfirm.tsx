@@ -184,6 +184,38 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
               </CardContent>
             </Card>
           )}
+                </Button>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-400">Energy:</span>
+                  <Badge variant="secondary">
+                    {getSliderLabel(data.energyLevel, ['Chill', 'Hyped'])}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-400">Comedy:</span>
+                  <Badge variant="secondary">
+                    {getSliderLabel(data.comedyLevel, ['Serious', 'Comedic'])}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-400">Stats:</span>
+                  <Badge variant="secondary">
+                    {getSliderLabel(data.statFocus, ['Light Stats', 'Deep Analytics'])}
+                  </Badge>
+                </div>
+                {data.favoriteTeam && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-neutral-400">Bias:</span>
+                    <Badge variant="secondary">
+                      {getSliderLabel(data.biasLevel, ['Neutral', 'Team Homer'])}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right Column */}
@@ -269,6 +301,63 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
               </CardContent>
             </Card>
           )}
+          {/* Voice Settings */}
+          <Card className="bg-neutral-800 border-neutral-700">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-white">Voice Settings</h3>
+                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-400">Gender:</span>
+                  <Badge variant="secondary">{getGenderLabel(data.voiceGender)}</Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-400">Speed:</span>
+                  <Badge variant="secondary">{getSpeedLabel(data.voiceSpeed)}</Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-400">Accent:</span>
+                  <Badge variant="secondary">{getAccentLabel(data.accent)}</Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-400">Frequency:</span>
+                  <Badge variant="secondary">{getFrequencyLabel(data.commentaryFrequency)}</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Features */}
+          <Card className="bg-neutral-800 border-neutral-700">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-white">Features</h3>
+                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600">
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-400">Live Q&A:</span>
+                  <Badge variant={data.liveQA ? "default" : "secondary"}>
+                    {data.liveQA ? "Enabled" : "Disabled"}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-400">Background Audio:</span>
+                  <Badge variant={data.backgroundAudio ? "default" : "secondary"}>
+                    {data.backgroundAudio ? "Enabled" : "Disabled"}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Custom Instructions */}
           {hasCustomInstructions && (
