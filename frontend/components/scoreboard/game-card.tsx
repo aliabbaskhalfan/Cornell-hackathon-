@@ -33,15 +33,15 @@ interface GameCardProps {
   onClick: () => void
 }
 
-export function GameCard({ game, onClick }: GameCardProps) {
+export function GameCard({ game, onClick, disabled = false }: GameCardProps & { disabled?: boolean }) {
   const status = getGameStatus(game.status)
   const statusColor = getStatusColor(game.status)
   const score = formatScore(game.score.home, game.score.away)
 
   return (
     <Card 
-      className="game-card cursor-pointer hover:shadow-lg transition-all duration-200"
-      onClick={onClick}
+      className={`game-card ${disabled ? 'cursor-default' : 'cursor-pointer'} hover:shadow-lg transition-all duration-200 ${disabled ? 'opacity-95' : ''}`}
+      onClick={disabled ? undefined : onClick}
     >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
@@ -65,7 +65,7 @@ export function GameCard({ game, onClick }: GameCardProps) {
               <img
                 src={getNbaTeamLogo(game.teams.away.abbreviation)}
                 alt={game.teams.away.abbreviation}
-                className="w-8 h-8 rounded-full bg-white object-contain p-1"
+                className="w-9 h-9 rounded-full bg-white object-contain p-1"
                 onError={(e) => {
                   e.currentTarget.src = getNbaTeamLogo(game.teams.away.abbreviation)
                 }}
@@ -90,7 +90,7 @@ export function GameCard({ game, onClick }: GameCardProps) {
               <img
                 src={getNbaTeamLogo(game.teams.home.abbreviation)}
                 alt={game.teams.home.abbreviation}
-                className="w-8 h-8 rounded-full bg-white object-contain p-1"
+                className="w-9 h-9 rounded-full bg-white object-contain p-1"
                 onError={(e) => {
                   e.currentTarget.src = getNbaTeamLogo(game.teams.home.abbreviation)
                 }}
@@ -113,10 +113,16 @@ export function GameCard({ game, onClick }: GameCardProps) {
           <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between text-xs text-slate-500">
               <span>Game {game.game_id}</span>
-              <div className="flex items-center space-x-1">
-                <Users className="h-3 w-3" />
-                <span>Live Commentary</span>
-              </div>
+              {game.status === 'InProgress' ? (
+                <div className="flex items-center space-x-1">
+                  <Users className="h-3 w-3" />
+                  <span>Live Commentary</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-1">
+                  <span className="font-medium text-slate-600">Final</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

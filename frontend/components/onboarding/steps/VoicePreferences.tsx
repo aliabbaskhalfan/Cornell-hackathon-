@@ -1,15 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Play, Volume2, Mic } from 'lucide-react';
 import { OnboardingStepProps } from '@/types/onboarding';
+import { api } from '@/lib/api';
 
 export default function VoicePreferences({ data, updateData, onNext, onPrevious, isFirstStep }: OnboardingStepProps) {
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+  const [voices, setVoices] = useState<Array<{ voice_id: string; name: string }>>([])
+  const [loadingVoices, setLoadingVoices] = useState(false)
+
+  useEffect(() => {
+    const loadVoices = async () => {
+      setLoadingVoices(true)
+      try {
+        const res = await api.listVoices()
+        if (res.success) {
+          const vs = (res.voices || []).map((v: any) => ({ voice_id: v.voice_id, name: v.name }))
+          setVoices(vs)
+        }
+      } catch {}
+      setLoadingVoices(false)
+    }
+    loadVoices()
+  }, [])
 
   const handleSliderChange = (key: keyof typeof data, value: number[]) => {
     updateData({ [key]: value[0] });
@@ -19,10 +37,26 @@ export default function VoicePreferences({ data, updateData, onNext, onPrevious,
     updateData({ [key]: value });
   };
 
-  const playPreview = () => {
-    setIsPlayingPreview(true);
-    // Simulate audio preview
-    setTimeout(() => setIsPlayingPreview(false), 2000);
+  const playPreview = async () => {
+    if (isPlayingPreview) return
+    setIsPlayingPreview(true)
+    try {
+      const res = await api.speakTts('This is a quick preview of your commentator voice.', {
+        persona: 'passionate',
+        language: data.language,
+        voice_id: data.voiceId,
+      })
+      if (res.success && res.audio_url) {
+        const audio = new Audio(res.audio_url)
+        audio.onended = () => setIsPlayingPreview(false)
+        audio.onerror = () => setIsPlayingPreview(false)
+        audio.play().catch(() => setIsPlayingPreview(false))
+      } else {
+        setIsPlayingPreview(false)
+      }
+    } catch {
+      setIsPlayingPreview(false)
+    }
   };
 
   const getSpeedLabel = (value: number) => {
@@ -51,14 +85,7 @@ export default function VoicePreferences({ data, updateData, onNext, onPrevious,
     }
   };
 
-  const getGenderLabel = (value: string) => {
-    switch (value) {
-      case 'male': return 'Male';
-      case 'female': return 'Female';
-      case 'no-preference': return 'No Preference';
-      default: return 'Male';
-    }
-  };
+  // removed gender selection UI
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
@@ -68,27 +95,40 @@ export default function VoicePreferences({ data, updateData, onNext, onPrevious,
       </div>
 
       <div className="space-y-8">
-        {/* Voice Gender */}
+        {/* ElevenLabs Voice (optional) */}
         <Card className="bg-neutral-800 border-neutral-700">
           <CardContent className="p-6">
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white">Voice Gender</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-white">Voice Selection</h3>
+                <Button size="sm" onClick={() => playPreview()} disabled={isPlayingPreview} className="bg-neutral-700 border-neutral-600 text-white">
+                  {isPlayingPreview ? 'Playing…' : 'Preview'}
+                </Button>
+              </div>
               <Select
-                value={data.voiceGender}
-                onValueChange={(value) => handleSelectChange('voiceGender', value)}
+                value={data.voiceId || ''}
+                onValueChange={(value) => {
+                  const name = voices.find(v => v.voice_id === value)?.name
+                  updateData({ voiceId: value, voiceName: name || undefined })
+                }}
               >
                 <SelectTrigger className="w-full bg-neutral-700 border-neutral-600 text-white">
-                  <SelectValue placeholder="Select voice gender" />
+                  <SelectValue placeholder={loadingVoices ? 'Loading voices…' : 'Select a voice (optional)'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="no-preference">No Preference</SelectItem>
+                  <SelectItem key={'gnPxliFHTp6OK6tcoA6i'} value={'gnPxliFHTp6OK6tcoA6i'}>Default Commentator</SelectItem>
+                  {(voices || [])
+                    .filter(v => v.voice_id !== 'gnPxliFHTp6OK6tcoA6i')
+                    .map(v => (
+                      <SelectItem key={v.voice_id} value={v.voice_id}>{v.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              <p className="text-sm text-neutral-400">Choose a specific ElevenLabs voice. Leave empty to use the default persona mapping.</p>
             </div>
           </CardContent>
         </Card>
+        {/* Gender selection removed - explicit voice selection controls the voice */}
 
         {/* Voice Speed */}
         <Card className="bg-neutral-800 border-neutral-700">
@@ -164,6 +204,7 @@ export default function VoicePreferences({ data, updateData, onNext, onPrevious,
                   <SelectItem value="australian">Australian</SelectItem>
                   <SelectItem value="southern">Southern US</SelectItem>
                   <SelectItem value="new-york">New York</SelectItem>
+                  <SelectItem value="indian">Indian</SelectItem>
                 </SelectContent>
               </Select>
             </div>

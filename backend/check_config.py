@@ -40,7 +40,7 @@ def check_gemini_config():
             
             # Test API key
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-pro')
+            model = genai.GenerativeModel('gemini-1.5-flash')
             print("✅ Gemini AI configuration looks good")
             return True
         except ImportError:

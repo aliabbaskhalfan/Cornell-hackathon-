@@ -37,6 +37,7 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
       case 'australian': return 'Australian';
       case 'southern': return 'Southern US';
       case 'new-york': return 'New York';
+      case 'indian': return 'Indian';
       default: return 'American Standard';
     }
   };
@@ -57,14 +58,37 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
     }
   };
 
-  const getGenderLabel = (value: string) => {
-    switch (value) {
-      case 'male': return 'Male';
-      case 'female': return 'Female';
-      case 'no-preference': return 'No Preference';
-      default: return 'Male';
-    }
+  // Only show items that differ from defaults (new selections in this session)
+  const DEFAULTS = {
+    favoriteTeam: null as any,
+    energyLevel: 50,
+    comedyLevel: 25,
+    statFocus: 50,
+    biasLevel: 50,
+    voiceSpeed: 50,
+    language: 'en',
+    accent: undefined as string | undefined,
+    commentaryFrequency: 'key-moments',
+    voiceId: undefined as string | undefined,
+    voiceName: undefined as string | undefined,
+    liveQA: true,
+    backgroundAudio: true,
+    customInstructions: ''
   };
+
+  const hasTeam = !!data.favoriteTeam;
+  const energyChanged = data.energyLevel !== DEFAULTS.energyLevel;
+  const comedyChanged = data.comedyLevel !== DEFAULTS.comedyLevel;
+  const statChanged = data.statFocus !== DEFAULTS.statFocus;
+  const biasChanged = hasTeam && data.biasLevel !== DEFAULTS.biasLevel;
+  const voiceSpeedChanged = data.voiceSpeed !== DEFAULTS.voiceSpeed;
+  const languageChanged = (data.language || DEFAULTS.language) !== DEFAULTS.language;
+  const accentSet = !!data.accent;
+  const frequencyChanged = data.commentaryFrequency !== DEFAULTS.commentaryFrequency;
+  const voiceSelected = !!data.voiceId;
+  const liveQAChanged = (data.liveQA ?? DEFAULTS.liveQA) !== DEFAULTS.liveQA;
+  const bgAudioChanged = (data.backgroundAudio ?? DEFAULTS.backgroundAudio) !== DEFAULTS.backgroundAudio;
+  const hasCustomInstructions = !!(data.customInstructions && data.customInstructions.trim().length > 0);
 
   const generateWelcomeMessage = () => {
     const teamName = data.favoriteTeam ? data.favoriteTeam.city : 'all teams';
@@ -87,161 +111,167 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
         <div className="space-y-6">
           <h2 className="text-2xl font-semibold text-white">Team and Style</h2>
           
-          {/* Team Selection */}
-          <Card className="bg-neutral-800 border-neutral-700">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  {data.favoriteTeam ? (
-                    <>
-                      <img
-                        src={data.favoriteTeam.logo}
-                        alt={`${data.favoriteTeam.city} ${data.favoriteTeam.name} logo`}
-                        className="w-12 h-12 object-contain"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.innerHTML = `<div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm" style="background: linear-gradient(135deg, ${data.favoriteTeam!.primaryColor}, ${data.favoriteTeam!.secondaryColor})">${data.favoriteTeam!.abbreviation}</div>`;
-                          }
-                        }}
-                      />
-                      <div>
-                        <h3 className="font-semibold text-white">{data.favoriteTeam.city} {data.favoriteTeam.name}</h3>
-                        <p className="text-sm text-neutral-400">{data.favoriteTeam.record.wins}-{data.favoriteTeam.record.losses}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-neutral-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold">N</span>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-white">Neutral Fan</h3>
-                        <p className="text-sm text-neutral-400">No favorite team</p>
-                      </div>
+          {/* Team Selection - only if selected */}
+          {hasTeam && (
+            <Card className="bg-neutral-800 border-neutral-700">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <img
+                      src={data.favoriteTeam!.logo}
+                      alt={`${data.favoriteTeam!.city} ${data.favoriteTeam!.name} logo`}
+                      className="w-12 h-12 object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `<div class=\"w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm\" style=\"background: linear-gradient(135deg, ${data.favoriteTeam!.primaryColor}, ${data.favoriteTeam!.secondaryColor})\">${data.favoriteTeam!.abbreviation}</div>`;
+                        }
+                      }}
+                    />
+                    <div>
+                      <h3 className="font-semibold text-white">{data.favoriteTeam!.city} {data.favoriteTeam!.name}</h3>
+                      <p className="text-sm text-neutral-400">{data.favoriteTeam!.record.wins}-{data.favoriteTeam!.record.losses}</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(0)}>
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Commentary Style - only changed sliders */}
+          {(energyChanged || comedyChanged || statChanged || biasChanged) && (
+            <Card className="bg-neutral-800 border-neutral-700">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-white">Commentary Style</h3>
+                  <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(1)}>
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {energyChanged && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-neutral-400">Energy:</span>
+                      <Badge variant="secondary">{getSliderLabel(data.energyLevel, ['Chill', 'Hyped'])}</Badge>
+                    </div>
+                  )}
+                  {comedyChanged && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-neutral-400">Comedy:</span>
+                      <Badge variant="secondary">{getSliderLabel(data.comedyLevel, ['Serious', 'Comedic'])}</Badge>
+                    </div>
+                  )}
+                  {statChanged && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-neutral-400">Stats:</span>
+                      <Badge variant="secondary">{getSliderLabel(data.statFocus, ['Light Stats', 'Deep Analytics'])}</Badge>
+                    </div>
+                  )}
+                  {biasChanged && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-neutral-400">Bias:</span>
+                      <Badge variant="secondary">{getSliderLabel(data.biasLevel, ['Neutral', 'Team Homer'])}</Badge>
                     </div>
                   )}
                 </div>
-                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(0)}>
-                  <Edit3 className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Commentary Style */}
-          <Card className="bg-neutral-800 border-neutral-700">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-white">Commentary Style</h3>
-                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(1)}>
-                  <Edit3 className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-400">Energy:</span>
-                  <Badge variant="secondary">
-                    {getSliderLabel(data.energyLevel, ['Chill', 'Hyped'])}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-400">Comedy:</span>
-                  <Badge variant="secondary">
-                    {getSliderLabel(data.comedyLevel, ['Serious', 'Comedic'])}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-400">Stats:</span>
-                  <Badge variant="secondary">
-                    {getSliderLabel(data.statFocus, ['Light Stats', 'Deep Analytics'])}
-                  </Badge>
-                </div>
-                {data.favoriteTeam && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-neutral-400">Bias:</span>
-                    <Badge variant="secondary">
-                      {getSliderLabel(data.biasLevel, ['Neutral', 'Team Homer'])}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Right Column */}
         <div className="space-y-6">
           <h2 className="text-2xl font-semibold text-white">Additional Settings</h2>
           
-          {/* Voice Settings */}
-          <Card className="bg-neutral-800 border-neutral-700">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-white">Voice Settings</h3>
-                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(2)}>
-                  <Edit3 className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-400">Language:</span>
-                  <Badge variant="secondary">{getLanguageLabel(data.language)}</Badge>
+          {/* Voice Settings - only selections */}
+          {(languageChanged || voiceSpeedChanged || accentSet || frequencyChanged || voiceSelected) && (
+            <Card className="bg-neutral-800 border-neutral-700">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-white">Voice Settings</h3>
+                  <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(2)}>
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-400">Gender:</span>
-                  <Badge variant="secondary">{getGenderLabel(data.voiceGender)}</Badge>
+                <div className="space-y-2">
+                  {languageChanged && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-neutral-400">Language:</span>
+                      <Badge variant="secondary">{getLanguageLabel(data.language)}</Badge>
+                    </div>
+                  )}
+                  {voiceSpeedChanged && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-neutral-400">Speed:</span>
+                      <Badge variant="secondary">{getSpeedLabel(data.voiceSpeed)}</Badge>
+                    </div>
+                  )}
+                  {accentSet && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-neutral-400">Accent:</span>
+                      <Badge variant="secondary">{getAccentLabel(data.accent as string)}</Badge>
+                    </div>
+                  )}
+                  {frequencyChanged && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-neutral-400">Frequency:</span>
+                      <Badge variant="secondary">{getFrequencyLabel(data.commentaryFrequency)}</Badge>
+                    </div>
+                  )}
+                  {voiceSelected && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-neutral-400">Voice:</span>
+                      <Badge variant="secondary">{data.voiceName || data.voiceId}</Badge>
+                    </div>
+                  )}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-400">Speed:</span>
-                  <Badge variant="secondary">{getSpeedLabel(data.voiceSpeed)}</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-400">Accent:</span>
-                  <Badge variant="secondary">{getAccentLabel(data.accent)}</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-400">Frequency:</span>
-                  <Badge variant="secondary">{getFrequencyLabel(data.commentaryFrequency)}</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
-          {/* Features */}
-          <Card className="bg-neutral-800 border-neutral-700">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-white">Features</h3>
-                <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(3)}>
-                  <Edit3 className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-400">Live Q&A:</span>
-                  <Badge variant={data.liveQA ? "default" : "secondary"}>
-                    {data.liveQA ? "Enabled" : "Disabled"}
-                  </Badge>
+          {/* Features - only if changed */}
+          {(liveQAChanged || bgAudioChanged) && (
+            <Card className="bg-neutral-800 border-neutral-700">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-white">Features</h3>
+                  <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(3)}>
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-neutral-400">Background Audio:</span>
-                  <Badge variant={data.backgroundAudio ? "default" : "secondary"}>
-                    {data.backgroundAudio ? "Enabled" : "Disabled"}
-                  </Badge>
+                <div className="space-y-2">
+                  {liveQAChanged && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-neutral-400">Live Q&A:</span>
+                      <Badge variant={data.liveQA ? 'default' : 'secondary'}>
+                        {data.liveQA ? 'Enabled' : 'Disabled'}
+                      </Badge>
+                    </div>
+                  )}
+                  {bgAudioChanged && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-neutral-400">Background Audio:</span>
+                      <Badge variant={data.backgroundAudio ? 'default' : 'secondary'}>
+                        {data.backgroundAudio ? 'Enabled' : 'Disabled'}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Custom Instructions */}
-          {data.customInstructions && (
+          {hasCustomInstructions && (
             <Card className="bg-neutral-800 border-neutral-700">
               <CardContent className="p-6">
                 <div className="space-y-4">

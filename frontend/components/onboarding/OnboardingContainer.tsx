@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { OnboardingData, OnboardingStep } from '@/types/onboarding';
+import { Header } from '@/components/layout/header';
 import ProgressIndicator from './ProgressIndicator';
 import TeamSelection from './steps/TeamSelection';
 import CommentaryStyle from './steps/CommentaryStyle';
@@ -48,11 +49,13 @@ const INITIAL_DATA: OnboardingData = {
   comedyLevel: 25,
   statFocus: 50,
   biasLevel: 50,
-  voiceGender: 'male',
+  voiceGender: 'no-preference',
   voiceSpeed: 50,
-  accent: 'american',
+  accent: undefined,
   commentaryFrequency: 'key-moments',
   language: 'en',
+  voiceId: undefined,
+  voiceName: undefined,
   customInstructions: '',
   liveQA: true,
   backgroundAudio: true,
@@ -135,20 +138,14 @@ export default function OnboardingContainer({ onComplete, onSkip }: OnboardingCo
 
   return (
     <div className="min-h-screen bg-neutral-900">
-      {/* Fixed Logo - Top Left */}
-      <div className="fixed -top-8 -left-8 z-50">
-        <img 
-          src="/images/logo.png" 
-          alt="CourtSide Logo" 
-          className="h-48 w-auto object-contain"
-        />
-      </div>
+      {/* App Header */}
+      <Header onMenuClick={() => {}} />
 
-      <div className="max-w-6xl mx-auto px-6 py-8 pt-8">
+      <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-white mb-2">
-            Welcome!
+            Welcome to CourtSide!
           </h1>
           <p className="text-xl text-neutral-300">
             Let's personalize your commentary experience

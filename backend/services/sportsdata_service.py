@@ -149,123 +149,146 @@ class SportsDataService:
         }
     
     def _get_mock_box_score(self, game_id):
-        """Return box score aligned with SportsDataIO. Single game only (Apr 13, 2025)."""
+        """Return a progressive box score aligned with SportsDataIO.
+        Players start at 0 and accumulate points as plays occur.
+        """
+        # Seed a roster with all players referenced in Q1 script (stable IDs)
+        base_roster = [
+            # Lakers (LAL)
+            {'PlayerID': 1, 'Name': 'Dalton Knecht', 'Team': 'LAL'},
+            {'PlayerID': 2, 'Name': 'Jordan Goodwin', 'Team': 'LAL'},
+            {'PlayerID': 3, 'Name': 'LeBron James', 'Team': 'LAL'},
+            {'PlayerID': 4, 'Name': 'Anthony Davis', 'Team': 'LAL'},
+            {'PlayerID': 5, 'Name': 'Austin Reaves', 'Team': 'LAL'},
+            {'PlayerID': 11, 'Name': 'Alex Len', 'Team': 'LAL'},
+            {'PlayerID': 12, 'Name': 'Christian Koloko', 'Team': 'LAL'},
+            {'PlayerID': 13, 'Name': 'Markieff Morris', 'Team': 'LAL'},
+            {'PlayerID': 14, 'Name': 'Shake Milton', 'Team': 'LAL'},
+            {'PlayerID': 15, 'Name': 'Zach Jemison III', 'Team': 'LAL'},
+            # Trail Blazers (POR)
+            {'PlayerID': 6, 'Name': 'Dalano Banton', 'Team': 'POR'},
+            {'PlayerID': 7, 'Name': 'Donovan Clingan', 'Team': 'POR'},
+            {'PlayerID': 16, 'Name': 'Toumani Camara', 'Team': 'POR'},
+            {'PlayerID': 17, 'Name': 'Matisse Thybulle', 'Team': 'POR'},
+            {'PlayerID': 18, 'Name': 'Jamal Murray', 'Team': 'POR'},
+            {'PlayerID': 19, 'Name': 'Rayan Rupert', 'Team': 'POR'},
+            {'PlayerID': 20, 'Name': 'Sidney Cissoko', 'Team': 'POR'},
+            {'PlayerID': 21, 'Name': 'Justin Minaya', 'Team': 'POR'},
+            {'PlayerID': 22, 'Name': 'Walker Kessler', 'Team': 'POR'},
+        ]
+
+        # Initialize statline with zeros
+        # Build robust name index: full name and last name
+        name_to_id = {}
+        for p in base_roster:
+            full = p['Name']
+            parts = full.split()
+            last = parts[-1] if parts else full
+            name_to_id[full.lower()] = p['PlayerID']
+            name_to_id[last.lower()] = p['PlayerID']
+        statlines = {
+            p['PlayerID']: {
+                'PlayerID': p['PlayerID'], 'Name': p['Name'], 'Team': p['Team'],
+                'Points': 0, 'Rebounds': 0, 'Assists': 0, 'Steals': 0, 'Blocks': 0, 'Turnovers': 0
+            } for p in base_roster
+        }
+
+        # Helper to extract player name from description
+        def extract_player(desc: str) -> str | None:
+            if not desc:
+                return None
+            # Patterns for makes/misses
+            patterns = [
+                r"^MISS\s+([A-Za-z]+(?:\s+[A-Za-z\.]+)?)\s+\d+['\"]?\s+.*",
+                r"^([A-Za-z]+(?:\s+[A-Za-z\.]+)?)\s+\d+['\"]?\s+.*",
+                r"^([A-Za-z]+(?:\s+[A-Za-z\.]+)?)\s+REBOUND",
+                r"^([A-Za-z]+(?:\s+[A-Za-z\.]+)?)\s+Free Throw",
+                r"^([A-Za-z]+(?:\s+[A-Za-z\.]+)?)\s+(?:STEAL|BLOCK|S\.FOUL|P\.FOUL|L\.B\.FOUL)",
+                r"^([A-Za-z]+(?:\s+[A-Za-z\.]+)?)\s+(?:Bad Pass|Traveling|Out of Bounds).*Turnover",
+            ]
+            for pat in patterns:
+                import re
+                m = re.match(pat, desc)
+                if m and m.group(1):
+                    nm = m.group(1).strip()
+                    if 3 <= len(nm) <= 30 and 'MISS' not in nm:
+                        return nm
+            return None
+
+        def resolve_player_id(name: str | None) -> int | None:
+            if not name:
+                return None
+            key = name.lower()
+            if key in name_to_id:
+                return name_to_id[key]
+            # Try last token
+            parts = key.split()
+            if parts:
+                last = parts[-1]
+                return name_to_id.get(last)
+            return None
+
+        def extract_assist_player(desc: str) -> int | None:
+            # Examples: "(Clingan 1 AST)", "(Camara 1 AST)"
+            import re
+            m = re.search(r"\(([^\)]+)\)", desc)
+            if not m:
+                return None
+            inside = m.group(1)
+            if 'AST' not in inside:
+                return None
+            # Take the first token before digits and AST
+            nm = inside.split('AST')[0].strip()
+            # remove trailing digits
+            nm = re.sub(r"\d+\s*$", "", nm).strip()
+            return resolve_player_id(nm)
+
+        # Accumulate stats from plays that have already occurred
+        current = self._compute_mock_q1_state()
+        current_remaining = current['TimeRemainingMinutes'] * 60 + current['TimeRemainingSeconds']
+        for p in self._q1_play_script:
+            if p['seconds_remaining'] < current_remaining:
+                # Play has already occurred when remaining time decreased below this play's time
+                pass
+            else:
+                # Future play; skip accumulation
+                continue
+            pts = p['points']
+            if pts > 0:
+                nm = extract_player(p['description'])
+                pid = resolve_player_id(nm)
+                if pid and pid in statlines:
+                    statlines[pid]['Points'] += pts
+                # credit assist if present
+                apid = extract_assist_player(p['description'])
+                if apid and apid in statlines:
+                    statlines[apid]['Assists'] += 1
+            # Simple parsing for turnovers/steals/blocks/rebounds (optional minimal)
+            desc = p['description']
+            if 'Turnover' in desc:
+                nm = extract_player(desc)
+                pid = resolve_player_id(nm)
+                if pid and pid in statlines:
+                    statlines[pid]['Turnovers'] += 1
+            if 'STEAL' in desc:
+                nm = extract_player(desc)
+                pid = resolve_player_id(nm)
+                if pid and pid in statlines:
+                    statlines[pid]['Steals'] += 1
+            if 'BLOCK' in desc and 'BLOCK (' in desc:
+                nm = extract_player(desc)
+                pid = resolve_player_id(nm)
+                if pid and pid in statlines:
+                    statlines[pid]['Blocks'] += 1
+            if 'REBOUND' in desc:
+                nm = extract_player(desc)
+                pid = resolve_player_id(nm)
+                if pid and pid in statlines:
+                    statlines[pid]['Rebounds'] += 1
+
         return {
             'GameID': self._mock_game_id,
-            'Players': [
-                    # Lakers Players (from real game)
-                    {
-                        'PlayerID': 1,
-                        'Name': 'Dalton Knecht',
-                        'Team': 'LAL',
-                        'Points': 27,
-                        'Rebounds': 8,
-                        'Assists': 2,
-                        'Steals': 1,
-                        'Blocks': 0,
-                        'Turnovers': 3
-                    },
-                    {
-                        'PlayerID': 2,
-                        'Name': 'Jordan Goodwin',
-                        'Team': 'LAL',
-                        'Points': 12,
-                        'Rebounds': 7,
-                        'Assists': 4,
-                        'Steals': 2,
-                        'Blocks': 0,
-                        'Turnovers': 2
-                    },
-                    {
-                        'PlayerID': 3,
-                        'Name': 'LeBron James',
-                        'Team': 'LAL',
-                        'Points': 8,
-                        'Rebounds': 5,
-                        'Assists': 3,
-                        'Steals': 1,
-                        'Blocks': 0,
-                        'Turnovers': 4
-                    },
-                    {
-                        'PlayerID': 4,
-                        'Name': 'Anthony Davis',
-                        'Team': 'LAL',
-                        'Points': 6,
-                        'Rebounds': 4,
-                        'Assists': 1,
-                        'Steals': 0,
-                        'Blocks': 2,
-                        'Turnovers': 2
-                    },
-                    {
-                        'PlayerID': 5,
-                        'Name': 'Austin Reaves',
-                        'Team': 'LAL',
-                        'Points': 5,
-                        'Rebounds': 3,
-                        'Assists': 2,
-                        'Steals': 1,
-                        'Blocks': 0,
-                        'Turnovers': 1
-                    },
-                    # Trail Blazers Players (from real game)
-                    {
-                        'PlayerID': 6,
-                        'Name': 'Dalano Banton',
-                        'Team': 'POR',
-                        'Points': 23,
-                        'Rebounds': 4,
-                        'Assists': 7,
-                        'Steals': 2,
-                        'Blocks': 1,
-                        'Turnovers': 2
-                    },
-                    {
-                        'PlayerID': 7,
-                        'Name': 'Donovan Clingan',
-                        'Team': 'POR',
-                        'Points': 12,
-                        'Rebounds': 12,
-                        'Assists': 3,
-                        'Steals': 1,
-                        'Blocks': 3,
-                        'Turnovers': 1
-                    },
-                    {
-                        'PlayerID': 8,
-                        'Name': 'Scoot Henderson',
-                        'Team': 'POR',
-                        'Points': 15,
-                        'Rebounds': 6,
-                        'Assists': 8,
-                        'Steals': 3,
-                        'Blocks': 0,
-                        'Turnovers': 3
-                    },
-                    {
-                        'PlayerID': 9,
-                        'Name': 'Jerami Grant',
-                        'Team': 'POR',
-                        'Points': 18,
-                        'Rebounds': 5,
-                        'Assists': 2,
-                        'Steals': 1,
-                        'Blocks': 1,
-                        'Turnovers': 1
-                    },
-                    {
-                        'PlayerID': 10,
-                        'Name': 'Anfernee Simons',
-                        'Team': 'POR',
-                        'Points': 14,
-                        'Rebounds': 3,
-                        'Assists': 5,
-                        'Steals': 2,
-                        'Blocks': 0,
-                        'Turnovers': 2
-                    }
-                ]
+            'Players': list(statlines.values())
         }
     
     def _get_mock_play_by_play(self, game_id):

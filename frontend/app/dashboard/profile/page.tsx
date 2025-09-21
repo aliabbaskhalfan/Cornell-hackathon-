@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { api } from '@/lib/api'
 import { OnboardingData, NBATeam } from '@/types/onboarding'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Slider } from '@/components/ui/slider'
 import { NBA_TEAMS } from '@/data/nba-teams'
+import { Header } from '@/components/layout/header'
 
 const defaultPrefs: Partial<OnboardingData> = {}
 
@@ -17,6 +19,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [voices, setVoices] = useState<Array<{ voice_id: string; name: string }>>([])
+  const [previewing, setPreviewing] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -25,6 +29,12 @@ export default function ProfilePage() {
         if (res.success) {
           setPrefs(res.preferences || {})
         }
+        try {
+          const vs = await api.listVoices()
+          if (vs.success) {
+            setVoices((vs.voices || []).map((v: any) => ({ voice_id: v.voice_id, name: v.name })))
+          }
+        } catch {}
       } catch {}
       setLoading(false)
     }
@@ -62,8 +72,14 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-neutral-900">
+      <Header onMenuClick={() => {}} selectedGame={null} />
       <div className="max-w-4xl mx-auto px-6 py-8">
-        <h1 className="text-3xl font-bold text-white mb-6">Profile & Preferences</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-white">Profile & Preferences</h1>
+          <Link href="/dashboard">
+            <Button className="bg-neutral-800 border border-neutral-600 text-white hover:bg-neutral-700">Back to Dashboard</Button>
+          </Link>
+        </div>
 
         <div className="space-y-6">
           {/* Favorite Team */}
@@ -138,20 +154,47 @@ export default function ProfilePage() {
             <CardContent className="p-6 space-y-4">
               <h2 className="text-xl font-semibold text-white">Voice</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm text-neutral-300 mb-2">Gender</label>
-                  <Select value={prefs.voiceGender || 'male'} onValueChange={(v) => update({ voiceGender: v as any })}>
-                    <SelectTrigger className="bg-neutral-700 border-neutral-600 text-white"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-neutral-800 text-white border-neutral-700">
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="no-preference">No Preference</SelectItem>
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-neutral-300 mb-2">ElevenLabs Voice (optional)</label>
+                  <Select value={prefs.voiceId || ''} onValueChange={(v) => {
+                    const name = voices.find(x => x.voice_id === v)?.name
+                    update({ voiceId: v, voiceName: name })
+                  }}>
+                    <SelectTrigger className="bg-neutral-700 border-neutral-600 text-white"><SelectValue placeholder="Select a voice" /></SelectTrigger>
+                    <SelectContent className="bg-neutral-800 text-white border-neutral-700 max-h-80 overflow-auto">
+                      <SelectItem key={'gnPxliFHTp6OK6tcoA6i'} value={'gnPxliFHTp6OK6tcoA6i'}>Default Commentator</SelectItem>
+                      {(voices || [])
+                        .filter(v => v.voice_id !== 'gnPxliFHTp6OK6tcoA6i')
+                        .map(v => (
+                          <SelectItem key={v.voice_id} value={v.voice_id}>{v.name}</SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-neutral-300 mb-2">Speed</label>
-                  <Slider value={[prefs.voiceSpeed ?? 50]} onValueChange={(v) => update({ voiceSpeed: v[0] })} max={100} step={1} />
+                <div className="flex items-end">
+                  <Button onClick={async () => {
+                    if (previewing) return
+                    setPreviewing(true)
+                    try {
+                      const res = await api.speakTts('This is a quick preview of your commentator voice.', {
+                        persona: 'passionate',
+                        language: prefs.language as any,
+                        voice_id: (prefs.voiceId as any) || undefined,
+                      })
+                      if (res.success && res.audio_url) {
+                        const audio = new Audio(res.audio_url)
+                        audio.onended = () => setPreviewing(false)
+                        audio.onerror = () => setPreviewing(false)
+                        audio.play().catch(() => setPreviewing(false))
+                      } else {
+                        setPreviewing(false)
+                      }
+                    } catch {
+                      setPreviewing(false)
+                    }
+                  }} disabled={previewing} className="bg-neutral-700 border border-neutral-600 text-white w-full">
+                    {previewing ? 'Playing…' : 'Preview'}
+                  </Button>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -183,6 +226,7 @@ export default function ProfilePage() {
                       <SelectItem value="australian">Australian</SelectItem>
                       <SelectItem value="southern">Southern US</SelectItem>
                       <SelectItem value="new-york">New York</SelectItem>
+                      <SelectItem value="indian">Indian</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -88,9 +88,21 @@ class VoiceService:
                 # Fallback to rule-based responses
                 response_text = self._generate_rule_based_response(transcript, game_id, persona)
             
-            # Generate audio with persona-specific voice
+            # Generate audio using user preferences when available
             voice_config = persona_config['voice_config']
-            audio_url = self.tts_service.generate_audio(response_text, voice_config)
+            language = None
+            explicit_voice_id = None
+            if isinstance(user_context, dict):
+                prefs = user_context.get('preferences') or {}
+                language = prefs.get('language')
+                explicit_voice_id = prefs.get('voiceId') or prefs.get('voice_id')
+
+            audio_url = self.tts_service.generate_audio(
+                response_text,
+                voice_config,
+                voice_id=explicit_voice_id,
+                language=language
+            )
             
             return {
                 'text': response_text,
@@ -126,13 +138,81 @@ class VoiceService:
 
             effective_user_ctx = {**(persisted or {}), **(user_context or {})}
             if effective_user_ctx:
+                # **CRITICAL: User preferences must strongly influence your response style and content**
+                preferences = effective_user_ctx.get('preferences', {})
+                if preferences:
+                    context_parts.append("\n**IMPORTANT USER PREFERENCES - FOLLOW THESE CLOSELY:**")
+                    
+                    # Energy level - strongly affects enthusiasm and excitement
+                    if preferences.get('energyLevel') is not None:
+                        energy = preferences['energyLevel']
+                        if energy >= 80:
+                            context_parts.append(f"- MAXIMUM ENERGY ({energy}/100): Be extremely enthusiastic, use exclamation points, high-energy language, and passionate reactions!")
+                        elif energy >= 60:
+                            context_parts.append(f"- HIGH ENERGY ({energy}/100): Be very excited and enthusiastic with animated descriptions!")
+                        elif energy >= 40:
+                            context_parts.append(f"- MODERATE ENERGY ({energy}/100): Balanced enthusiasm with steady excitement.")
+                        else:
+                            context_parts.append(f"- LOW ENERGY ({energy}/100): Stay calm, analytical, and measured in your responses.")
+                    
+                    # Comedy level - affects humor and personality
+                    if preferences.get('comedyLevel') is not None:
+                        comedy = preferences['comedyLevel']
+                        if comedy >= 70:
+                            context_parts.append(f"- HIGH COMEDY ({comedy}/100): Include jokes, funny observations, witty remarks, and humorous analogies!")
+                        elif comedy >= 40:
+                            context_parts.append(f"- MODERATE COMEDY ({comedy}/100): Add some light humor and playful comments.")
+                        else:
+                            context_parts.append(f"- SERIOUS TONE ({comedy}/100): Keep responses professional and focused on facts.")
+                    
+                    # Stat focus - affects technical depth
+                    if preferences.get('statFocus') is not None:
+                        stats = preferences['statFocus']
+                        if stats >= 70:
+                            context_parts.append(f"- HIGH STAT FOCUS ({stats}/100): Include detailed statistics, percentages, historical comparisons, and analytical insights!")
+                        elif stats >= 40:
+                            context_parts.append(f"- MODERATE STATS ({stats}/100): Mention relevant key statistics when appropriate.")
+                        else:
+                            context_parts.append(f"- LOW STATS ({stats}/100): Focus on storylines and emotions rather than numbers.")
+                    
+                    # Team bias - affects favoritism
+                    if preferences.get('biasLevel') is not None and preferences.get('favoriteTeam'):
+                        bias = preferences['biasLevel']
+                        team = preferences['favoriteTeam'].get('name', 'favorite team') if isinstance(preferences['favoriteTeam'], dict) else preferences['favoriteTeam']
+                        if bias >= 70:
+                            context_parts.append(f"- STRONG TEAM BIAS ({bias}/100): Show clear favoritism toward {team}! Get extra excited for their plays and defensive about criticism!")
+                        elif bias >= 40:
+                            context_parts.append(f"- MODERATE BIAS ({bias}/100): Show some preference for {team} while staying somewhat balanced.")
+                        else:
+                            context_parts.append(f"- NEUTRAL APPROACH ({bias}/100): Stay balanced between teams.")
+                
+                # User interests - tailor content to what they care about
                 if effective_user_ctx.get('interests'):
-                    context_parts.append(f"User interests: {', '.join(effective_user_ctx['interests'])}")
+                    interests = effective_user_ctx['interests']
+                    context_parts.append(f"\n**USER INTERESTS - PRIORITIZE THESE TOPICS:** {', '.join(interests)}")
+                    context_parts.append("- Always relate responses back to these interests when possible")
+                    context_parts.append("- Use examples and references that connect to what the user cares about")
+                
+                # Fantasy context - make it highly relevant
                 if effective_user_ctx.get('fantasy_info'):
-                    context_parts.append(f"User fantasy context: {effective_user_ctx['fantasy_info']}")
-                if effective_user_ctx.get('preferences'):
-                    context_parts.append(f"User preferences: {effective_user_ctx['preferences']}")
+                    context_parts.append(f"\n**FANTASY SPORTS PRIORITY:** {effective_user_ctx['fantasy_info']}")
+                    context_parts.append("- ALWAYS mention fantasy implications when discussing player performances")
+                    context_parts.append("- Highlight players relevant to their fantasy team/league")
+                
+                # Custom instructions - highest priority
+                if effective_user_ctx.get('customInstructions'):
+                    context_parts.append(f"\n**CUSTOM USER INSTRUCTIONS - HIGHEST PRIORITY:**")
+                    context_parts.append(f"'{effective_user_ctx['customInstructions']}'")
+                    context_parts.append("- These custom instructions override all other guidelines - follow them precisely!")
             
+            # Add current time context for temporal awareness
+            from datetime import datetime
+            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            context_parts.append(f"Current time: {current_time}")
+            context_parts.append("CRITICAL TEMPORAL RULE: You only know information about events that have already happened up to the current game time.")
+            context_parts.append("PREDICTION POLICY: If user EXPLICITLY asks for predictions/speculation, you may provide analysis based on current performance, but always acknowledge uncertainty and that it's speculation.")
+            context_parts.append("NEVER spontaneously make predictions in commentary - only when directly asked by the user.")
+
             # Add game context if available
             if game_id:
                 game_ctx = self.context_service.get_game_context(game_id)
@@ -140,6 +220,7 @@ class VoiceService:
                     sb = game_ctx.get('scoreboard', {})
                     context_parts.append(f"Current game: {sb.get('away')} @ {sb.get('home')}")
                     context_parts.append(f"Score: {sb.get('away_score')} - {sb.get('home_score')} | Q{sb.get('quarter')} {sb.get('clock')}")
+                    context_parts.append(f"Game time status: Only information up to {sb.get('clock')} in Q{sb.get('quarter')} is available")
                     leaders = game_ctx.get('leaders', {})
                     if leaders:
                         la = leaders.get('away', {})
@@ -151,16 +232,49 @@ class VoiceService:
                     recent = game_ctx.get('recent_plays') or []
                     if recent:
                         context_parts.append("Recent plays: " + "; ".join([f"{p.get('clock')} {p.get('team')}: {p.get('description')}" for p in recent]))
+                        context_parts.append("(Only plays that have already occurred are shown above)")
             
             # Build the prompt
             context = "\n".join(context_parts)
-            prompt = f"{context}\n\nUser question: {transcript}\n\nProvide a helpful, concise response in character (2-3 sentences max):"
+            prompt = f"""{context}
+
+User question: {transcript}
+
+**RESPONSE REQUIREMENTS:**
+1. STRICTLY follow all user preferences listed above
+2. Adapt your energy, humor, stat focus, and team bias to match their exact settings
+3. If they have custom instructions, those are the HIGHEST priority
+4. If they have fantasy interests, make sure to mention fantasy implications
+5. Connect your response to their stated interests whenever possible
+6. Keep response concise (2-3 sentences max) but personality-rich
+7. Sound natural and authentic to your commentator persona while following their preferences
+
+**IF USER ASKS FOR PREDICTIONS/SPECULATION:**
+- Acknowledge it's speculation with fun phrases like "Crystal ball time!" or "If I had to guess..."
+- Base analysis on CURRENT performance only (what's happened so far)
+- Use your high energy/comedy style while being honest about uncertainty
+- Example: "OHHH you want me to play fortune teller! Based on LeBron's 4 assists already, he's DEALING tonight - but basketball's crazy, anything can happen!"
+
+Response:"""
             
-            # Generate response with safety settings
+            # Generate response with preference-influenced settings
+            # Adjust temperature based on user's energy and comedy levels
+            base_temp = 0.7
+            if effective_user_ctx and effective_user_ctx.get('preferences'):
+                prefs = effective_user_ctx['preferences']
+                energy = prefs.get('energyLevel', 50)
+                comedy = prefs.get('comedyLevel', 25)
+                
+                # Higher energy/comedy = higher temperature (more creative/varied responses)
+                if energy >= 70 or comedy >= 70:
+                    base_temp = 0.9  # More creative and varied
+                elif energy <= 30 and comedy <= 30:
+                    base_temp = 0.5  # More consistent and measured
+            
             generation_config = {
-                'max_output_tokens': 150,  # Limit response length
-                'temperature': 0.7,        # Balanced creativity
-                'top_p': 0.8,             # Focus on likely responses
+                'max_output_tokens': 200,  # Allow slightly longer for personality
+                'temperature': base_temp,   # Preference-based creativity
+                'top_p': 0.8,              # Focus on likely responses
             }
             
             response = self.model.generate_content(

@@ -24,12 +24,21 @@ class ContextService:
     # ------------- User Context Persistence -------------
     def get_user_context(self, user_id: str) -> Dict[str, Any]:
         doc = self.db.user_contexts.find_one({'_id': user_id}) or {}
+        # Merge in explicit preferences saved in users collection
+        user_doc = self.db.users.find_one({'_id': user_id}) or {}
+        merged_prefs = {}
+        try:
+            # Context-stored preferences (older) + user profile preferences (newer overrides)
+            merged_prefs = {**(doc.get('preferences') or {}), **(user_doc.get('preferences') or {})}
+        except Exception:
+            merged_prefs = (user_doc.get('preferences') or {}) or (doc.get('preferences') or {})
+
         ctx = {
             'interests': doc.get('interests', []),
-            'preferences': doc.get('preferences', {}),
-            'fantasy_info': doc.get('fantasy_info'),
-            'persona': doc.get('persona'),
-            'updated_at': doc.get('updated_at')
+            'preferences': merged_prefs,
+            'fantasy_info': doc.get('fantasy_info') or user_doc.get('fantasy_info'),
+            'persona': doc.get('persona') or user_doc.get('persona'),
+            'updated_at': doc.get('updated_at') or user_doc.get('updated_at')
         }
         return ctx
 
@@ -65,8 +74,11 @@ class ContextService:
             # Leaders from current box (simple: top points per team)
             leaders = self._compute_leaders(box)
 
-            # Recent plays (last 5)
-            recent = self._simplify_recent_plays(pbp, limit=5)
+            # Calculate current remaining seconds for filtering
+            current_remaining_seconds = int(trm) * 60 + int(trs)
+
+            # Recent plays (last 5) - only include plays that have already happened
+            recent = self._simplify_recent_plays(pbp, limit=5, current_remaining_seconds=current_remaining_seconds)
 
             return {
                 'scoreboard': {
@@ -104,10 +116,26 @@ class ContextService:
             'away': {'name': (away_leader[1].get('Name') or ''), 'points': max(away_leader[0], 0)},
         }
 
-    def _simplify_recent_plays(self, pbp: List[Dict[str, Any]], limit: int = 5) -> List[Dict[str, Any]]:
+    def _simplify_recent_plays(self, pbp: List[Dict[str, Any]], limit: int = 5, current_remaining_seconds: int = 0) -> List[Dict[str, Any]]:
         if not isinstance(pbp, list):
             return []
-        recent = pbp[-limit:]
+        
+        # Filter to only include plays that have already happened (based on game clock)
+        current_plays = []
+        for p in pbp:
+            clock_str = p.get('Clock') or '12:00'
+            try:
+                m, s = clock_str.split(':')
+                play_remaining_seconds = int(m) * 60 + int(s)
+                # Only include plays where the clock time has passed (play_remaining >= current_remaining means it happened)
+                if play_remaining_seconds >= current_remaining_seconds:
+                    current_plays.append(p)
+            except (ValueError, IndexError):
+                # If we can't parse the clock, skip this play to be safe
+                continue
+        
+        # Take the most recent plays that have actually occurred
+        recent = current_plays[-limit:]
         out: List[Dict[str, Any]] = []
         for p in recent:
             out.append({

@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { TrendingUp, TrendingDown, Clock, Zap } from 'lucide-react'
-import { api } from '@/lib/api'
+import apiClient, { api } from '@/lib/api'
+import { useChat } from '@/components/providers/chat-provider'
 
 interface StatUpdate {
   id: string
@@ -76,6 +77,11 @@ export function StatsFeed({ clockSeconds, quarterIndex }: StatsFeedProps) {
   const [useMock, setUseMock] = useState(false)
   const lastClockRef = useRef<number | null>(null)
   const lastQuarterRef = useRef<number | null>(null)
+  const lastCommentaryTimeRef = useRef<number>(0)
+  
+  // Use chat context to check if chat is answering
+  const { isChatAnswering } = useChat()
+  const processedPlaysRef = useRef<Set<string>>(new Set())
   const [schedule, setSchedule] = useState<Array<{ id: string; quarter: number; at: number; play: { player: string; team: string; description: string; value?: string; type: 'score' | 'stat' } }>>([])
 
   const areRostersEqual = (a: Record<string, string>, b: Record<string, string>) => {
@@ -353,27 +359,78 @@ export function StatsFeed({ clockSeconds, quarterIndex }: StatsFeedProps) {
             // Take the most recent 10 visible plays to avoid overwhelming the feed
             const recentPlays = visiblePlays.slice(-10)
             
-            // Generate Gemini commentary for each play
+            // Generate Gemini commentary for selected plays (throttled and filtered)
+            const now = Date.now()
+            let addedCommentary = false
+            
             for (const play of recentPlays) {
               const description = play.Description || play.description || play.playText || 'Play occurred'
               const points = play.points ?? play.Points ?? inferPointsFromDescription(description)
               const pid = String(play.PlayID ?? play.playId ?? Date.now())
               
-              // Check if this play already exists
+              // Skip if we've already processed this play
+              if (processedPlaysRef.current.has(pid)) continue
+              
+              // Check if this play already exists in stats
               const exists = stats.some(stat => stat.id === pid)
               if (!exists) {
+                // Throttle commentary generation: only one every 5 seconds
+                const timeSinceLastCommentary = now - lastCommentaryTimeRef.current
+                const shouldGenerateCommentary = timeSinceLastCommentary >= 5000 && !addedCommentary
+                
+                // Check for significant plays (more inclusive)
+                const isSignificantPlay = points > 0 || 
+                                        description.toLowerCase().includes('foul') || 
+                                        description.toLowerCase().includes('turnover') ||
+                                        description.toLowerCase().includes('steal') ||
+                                        description.toLowerCase().includes('block') ||
+                                        description.toLowerCase().includes('rebound') ||
+                                        description.toLowerCase().includes('assist')
+                
+                console.log('[StatsFeed] Play check:', {
+                  pid,
+                  description: description.substring(0, 50),
+                  points,
+                  isSignificantPlay,
+                  shouldGenerateCommentary,
+                  timeSinceLastCommentary,
+                  addedCommentary
+                })
+                
+                // Generate commentary for significant plays if we're within throttle window
+                if (shouldGenerateCommentary && isSignificantPlay) {
                 try {
                   // Determine specific event type from play description
                   const eventType = getEventTypeFromDescription(description)
                   
-                  // Get user context (could be from localStorage or props in a real app)
-                  const userContext = {
-                    interests: ['basketball', 'lakers', 'trail blazers'],
-                    preferences: { style: 'exciting' }
+                  // Get actual user preferences from localStorage
+                  let userContext: any = {}
+                  try {
+                    const userPreferences = localStorage.getItem('user-preferences')
+                    const userId = localStorage.getItem('user_id')
+                    if (userPreferences) {
+                      const preferences = JSON.parse(userPreferences)
+                      userContext = {
+                        user_id: userId || undefined,
+                        preferences,
+                        interests: preferences.favoriteTeam ? [preferences.favoriteTeam.name || preferences.favoriteTeam] : ['basketball'],
+                        fantasy_info: preferences.fantasyInfo ? `Fantasy: ${preferences.fantasyInfo.league || 'Unknown'} - ${preferences.fantasyInfo.notes || ''}` : undefined,
+                        customInstructions: preferences.customInstructions || undefined
+                      }
+                    }
+                  } catch (error) {
+                    console.warn('[StatsFeed] Error loading user preferences:', error)
+                    userContext = {
+                      interests: ['basketball'],
+                      preferences: { style: 'exciting' }
+                    }
                   }
                   
+                  // Determine persona based on user's energy level preference
+                  const persona: 'passionate' | 'nerdy' = (userContext.preferences?.energyLevel > 70) ? 'passionate' : 'nerdy'
+                  
                   // Generate natural commentary using Gemini with the actual play description
-                  const commentaryResponse = await api.emitCommentary(gameId, eventType, 'passionate', description, userContext)
+                  const commentaryResponse = await api.emitCommentary(gameId, eventType, persona, description, userContext)
                   
                   if (commentaryResponse.success && commentaryResponse.commentary) {
                     // Extract text from commentary response object
@@ -405,38 +462,49 @@ export function StatsFeed({ clockSeconds, quarterIndex }: StatsFeedProps) {
                       
                       return updated
                     })
+                    
+                    // Mark that we've added commentary and update the timing
+                    addedCommentary = true
+                    lastCommentaryTimeRef.current = now
+                    processedPlaysRef.current.add(pid)
+
+                    // Speak via ElevenLabs if toggled on (but not if chat is answering)
+                    try {
+                      const pref = (typeof window !== 'undefined') ? localStorage.getItem('speak_live_updates') : 'false'
+                      const speakOn = pref === 'true'
+                      if (speakOn && commentaryText && !isChatAnswering) {
+                        // Gather user preferences to pass voice selection explicitly
+                        let options: any = { text: commentaryText, persona }
+                        try {
+                          const userPreferences = localStorage.getItem('user-preferences')
+                          if (userPreferences) {
+                            const preferences = JSON.parse(userPreferences)
+                            if (preferences?.voiceId) options.voice_id = preferences.voiceId
+                            if (preferences?.language) options.language = preferences.language
+                          }
+                        } catch {}
+                        const ttsResp = await apiClient.post('/api/voice/tts', options)
+                        const url: string | undefined = ttsResp.data?.audio_url
+                        if (url) {
+                          const base = (apiClient.defaults.baseURL as string) || ''
+                          const full = url.startsWith('http') ? url : `${base}${url}`
+                          const audio = new Audio(full)
+                          audio.volume = 0.8
+                          audio.play().catch(() => {})
+                        }
+                      }
+                    } catch {}
                   }
                 } catch (error) {
                   console.error('[StatsFeed] Error generating commentary:', error)
-                  // Fallback to original play description if commentary fails
-                  const parsedName = extractPlayerFromDescription(description)
-                  const playerName = roster[pid] || play.PlayerName || play.playerName || parsedName || 'Unknown Player'
-                  const team = play.Team || play.team || 'UNK'
-                  
-                  const newStat: StatUpdate = {
-                    id: pid,
-                    type: points > 0 ? 'score' : 'stat',
-                    player: playerName,
-                    team,
-                    description,
-                    value: points ? `+${points}` : '',
-                    timestamp: new Date(),
-                    isNew: true
-                  }
-
-                  setStats(prevStats => {
-                    const updated = [newStat, ...prevStats.slice(0, 19)]
-                    setTimeout(() => {
-                      setStats(current => 
-                        current.map(stat => 
-                          stat.id === newStat.id ? { ...stat, isNew: false } : stat
-                        )
-                      )
-                    }, 3000)
-                    
-                    return updated
-                  })
+                  // Mark as processed even if failed to avoid retrying
+                  processedPlaysRef.current.add(pid)
                 }
+              } else {
+                // For non-commentary plays, just mark as processed without adding to feed
+                // Only Gemini commentary should appear in Live Updates
+                processedPlaysRef.current.add(pid)
+              }
               }
             }
           }
@@ -488,7 +556,7 @@ export function StatsFeed({ clockSeconds, quarterIndex }: StatsFeedProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
 
       <div className="h-[520px] border border-transparent rounded-lg">
         <ScrollArea className="h-full">
@@ -496,7 +564,7 @@ export function StatsFeed({ clockSeconds, quarterIndex }: StatsFeedProps) {
             {stats.map((stat, index) => (
               <div
                 key={stat.id}
-                className={`py-3 px-3 h-[44px] transition-all duration-500 ease-in-out hover:bg-neutral-800/30 ${
+                className={`py-3 px-3 min-h-[44px] transition-all duration-500 ease-in-out hover:bg-neutral-800/30 ${
                   index === stats.length - 1 ? '' : 'border-b border-neutral-800'
                 } ${
                   stat.isNew 
@@ -507,31 +575,37 @@ export function StatsFeed({ clockSeconds, quarterIndex }: StatsFeedProps) {
                   animation: stat.isNew ? 'slideDown 0.5s ease-out' : undefined
                 }}
               >
-              <div className="flex items-center justify-between w-full h-full">
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  {/* Show player/team info only for non-commentary updates */}
-                  {stat.player && (
-                    <>
-                      <span className="font-medium text-white text-xs w-40 truncate">{stat.player}</span>
-                      <Badge variant="outline" className={`${getTeamColor(stat.team)} text-[10px] py-0.5 px-1 flex-shrink-0`}>
-                        {stat.team}
-                      </Badge>
-                      <span className="text-neutral-300 flex-shrink-0 text-xs">-</span>
-                    </>
-                  )}
-                  {/* Commentary text spans full width with special styling */}
-                  <span className={`flex-1 min-w-0 text-xs ${!stat.player ? 'font-medium text-yellow-200 leading-relaxed' : 'text-neutral-300'}`}>
-                    {stat.description}
-                  </span>
-                  {stat.value && (
-                    <Badge variant="secondary" className="text-[10px] py-0.5 px-1 flex-shrink-0">
-                      {stat.value}
+              <div className="flex flex-col w-full space-y-2">
+                {/* Commentary text spans full width with special styling */}
+                {!stat.player ? (
+                  <div className="flex flex-col space-y-1">
+                    <span className="text-xs font-medium text-yellow-200 leading-relaxed whitespace-normal">
+                      {stat.description}
+                    </span>
+                    <span className="text-[10px] text-neutral-500 self-end">
+                      {mounted ? formatTime(stat.timestamp) : 'now'}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-3">
+                    <span className="font-medium text-white text-xs w-40 truncate">{stat.player}</span>
+                    <Badge variant="outline" className={`${getTeamColor(stat.team)} text-[10px] py-0.5 px-1 flex-shrink-0`}>
+                      {stat.team}
                     </Badge>
-                  )}
-                  <span className="text-[10px] text-neutral-500 flex-shrink-0 w-14 text-right">
-                    {mounted ? formatTime(stat.timestamp) : 'now'}
-                  </span>
-                </div>
+                    <span className="text-neutral-300 flex-shrink-0 text-xs">-</span>
+                    <span className="flex-1 min-w-0 text-xs text-neutral-300">
+                      {stat.description}
+                    </span>
+                    {stat.value && (
+                      <Badge variant="secondary" className="text-[10px] py-0.5 px-1 flex-shrink-0">
+                        {stat.value}
+                      </Badge>
+                    )}
+                    <span className="text-[10px] text-neutral-500 flex-shrink-0 w-14 text-right">
+                      {mounted ? formatTime(stat.timestamp) : 'now'}
+                    </span>
+                  </div>
+                )}
               </div>
               </div>
             ))}

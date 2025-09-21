@@ -148,6 +148,7 @@ frontend/next-env.d.ts
 # ================================
 
 # VSCode
+.cursor
 .vscode/
 *.code-workspace
 

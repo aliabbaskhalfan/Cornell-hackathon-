@@ -20,9 +20,11 @@ export interface OnboardingData {
   biasLevel: number; // 0-100 (only shown if team selected)
   voiceGender: 'male' | 'female' | 'no-preference';
   voiceSpeed: number; // 0-100
-  accent: 'american' | 'british' | 'australian' | 'southern' | 'new-york';
+  accent?: 'american' | 'british' | 'australian' | 'southern' | 'new-york' | 'indian';
   commentaryFrequency: 'every-play' | 'key-moments' | 'major-events';
   language?: 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'hi' | 'ja' | 'ko' | 'zh';
+  voiceId?: string; // explicit ElevenLabs voice id
+  voiceName?: string; // display name for selection
   customInstructions: string;
   liveQA: boolean;
   backgroundAudio: boolean;

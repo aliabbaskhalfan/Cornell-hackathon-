@@ -24,4 +24,4 @@ class Config:
     
     # Commentary settings
     COMMENTARY_CONFIDENCE_THRESHOLD = 0.7
-    MAX_COMMENTARY_LENGTH = 150  # characters
+    MAX_COMMENTARY_LENGTH = 280  # characters (expanded for smoother on-air reads)

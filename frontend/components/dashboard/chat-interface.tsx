@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Mic, MicOff, Send, Bot, User } from 'lucide-react'
 import { api } from '@/lib/api'
+import { useChat } from '@/components/providers/chat-provider'
 
 interface Message {
   id: string
@@ -28,6 +29,9 @@ export function ChatInterface() {
   const [isRecording, setIsRecording] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  
+  // Use chat context to notify other components when answering
+  const { setChatAnswering } = useChat()
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -52,6 +56,7 @@ export function ChatInterface() {
     setMessages(prev => [...prev, userMessage])
     setInputValue('')
     setIsLoading(true)
+    setChatAnswering(true) // Notify other components that chat is answering
 
     try {
       // Preferences and persona mapping
@@ -88,6 +93,7 @@ export function ChatInterface() {
       setMessages(prev => [...prev, assistantMessage])
     } finally {
       setIsLoading(false)
+      setChatAnswering(false) // Reset chat answering state
     }
   }
 

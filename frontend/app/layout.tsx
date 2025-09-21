@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { QueryProvider } from '@/components/providers/query-provider'
 import { SocketProvider } from '@/components/providers/socket-provider'
+import { ChatProvider } from '@/components/providers/chat-provider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,9 +22,11 @@ export default function RootLayout({
       <body className={inter.className}>
         <QueryProvider>
           <SocketProvider>
-            <div className="min-h-screen bg-neutral-900">
-              {children}
-            </div>
+            <ChatProvider>
+              <div className="min-h-screen bg-neutral-900">
+                {children}
+              </div>
+            </ChatProvider>
           </SocketProvider>
         </QueryProvider>
       </body>

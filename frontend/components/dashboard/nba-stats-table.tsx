@@ -381,16 +381,16 @@ export function NBAStatsTable() {
   return (
     <div className="space-y-4">
 
-      <div className="h-[520px] border border-transparent rounded-lg overflow-hidden flex flex-col">
-        <div className="flex-1 w-full">
+      <div className="h-[600px] border border-transparent rounded-lg flex flex-col">
+        <div className="flex-1 w-full overflow-hidden">
           <div className="h-full">
             <ScrollArea className="h-full">
               <div className="w-full overflow-x-auto">
               <Table className="min-w-[900px] table-fixed text-xs">
             <TableHeader className="bg-neutral-900">
               <TableRow className="border-b border-neutral-800 hover:bg-transparent">
-                <TableHead className="text-neutral-400 font-medium w-56 pr-2">Player</TableHead>
-                <TableHead className="text-neutral-400 font-medium w-12 pl-1">Team</TableHead>
+                <TableHead className="text-neutral-400 font-medium w-56">Player</TableHead>
+                <TableHead className="text-neutral-400 font-medium w-12">Team</TableHead>
                 <TableHead className="text-neutral-400 font-medium w-12">Pos</TableHead>
                 <TableHead className="text-neutral-400 font-medium text-right w-12">PTS</TableHead>
                 <TableHead className="text-neutral-400 font-medium text-right w-12">REB</TableHead>
@@ -444,8 +444,8 @@ export function NBAStatsTable() {
                                 animation: player.isNew ? 'slideDown 0.5s ease-out' : undefined
                               }}
                             >
-                              <TableCell className="font-medium text-white text-xs pr-2 whitespace-normal break-words leading-tight align-top" title={player.name}>{player.name}</TableCell>
-                              <TableCell className="pl-1">
+                              <TableCell className="font-medium text-white text-xs whitespace-normal break-words leading-tight align-top" title={player.name}>{player.name}</TableCell>
+                              <TableCell className="">
                                 <Badge variant="outline" className={`${getTeamColor(player.team)} text-[10px] py-0.5 px-1`}>
                                   {player.team}
                                 </Badge>

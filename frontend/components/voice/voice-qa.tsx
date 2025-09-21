@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Mic, MicOff, Volume2 } from 'lucide-react'
 import { api } from '@/lib/api'
+import { useChat } from '@/components/providers/chat-provider'
 
 interface VoiceQAProps {
   gameId?: string | null
@@ -16,6 +17,9 @@ export function VoiceQA({ gameId }: VoiceQAProps) {
   const [response, setResponse] = useState<any>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
+  
+  // Use chat context to notify other components when processing voice queries
+  const { setChatAnswering } = useChat()
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
@@ -59,6 +63,7 @@ export function VoiceQA({ gameId }: VoiceQAProps) {
 
   const handleVoiceQuery = async (transcript: string) => {
     setIsProcessing(true)
+    setChatAnswering(true) // Notify other components that voice query is being processed
     try {
       const result = await api.processVoiceQuery(transcript, gameId || undefined)
       setResponse(result.response)
@@ -76,6 +81,7 @@ export function VoiceQA({ gameId }: VoiceQAProps) {
       })
     } finally {
       setIsProcessing(false)
+      setChatAnswering(false) // Reset chat answering state
     }
   }
 
