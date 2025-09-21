@@ -44,6 +44,32 @@ export default function CustomInstructions({ data, updateData, onNext, onPreviou
     return 'text-gray-500';
   };
 
+  const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  const isInstructionSelected = (text: string) => {
+    return (data.customInstructions || '').includes(text);
+  };
+
+  const toggleInstruction = (exampleId: string) => {
+    const example = CUSTOM_INSTRUCTION_EXAMPLES.find(ex => ex.id === exampleId);
+    if (!example) return;
+    const current = (data.customInstructions || '').trim();
+    const exists = current.includes(example.text);
+    let next = current;
+    if (exists) {
+      const pattern = new RegExp(`(^|\\n)${escapeRegExp(example.text)}(\\n|$)`);
+      next = next.replace(pattern, (match, before, after) => (before && after ? '\\n' : ''));
+      next = next.replace(/\n{2,}/g, '\\n').trim();
+    } else {
+      const additionalLength = (next ? 1 : 0) + example.text.length; // include newline if needed
+      if (next.length + additionalLength > 500) {
+        return; // prevent exceeding max length
+      }
+      next = next ? `${next}\n${example.text}` : example.text;
+    }
+    updateData({ customInstructions: next });
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
       <div className="text-center space-y-2">
@@ -81,15 +107,6 @@ export default function CustomInstructions({ data, updateData, onNext, onPreviou
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-neutral-300 mb-2">Team Name</label>
-                  <Textarea
-                    placeholder="e.g., Downtown Dimes"
-                    value={data.fantasyInfo?.teamName || ''}
-                    onChange={(e) => updateData({ fantasyInfo: { ...(data.fantasyInfo || {}), teamName: e.target.value } })}
-                    className="min-h-[44px] resize-none bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400"
-                  />
-                </div>
               </div>
               <div>
                 <label className="block text-sm text-neutral-300 mb-2">Notes (players, league settings, etc.)</label>
@@ -112,6 +129,26 @@ export default function CustomInstructions({ data, updateData, onNext, onPreviou
                 <span className={`text-sm ${getCharacterColor()}`}>
                   {getCharacterCount()}/500 characters
                 </span>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-neutral-400">Quick presets</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {CUSTOM_INSTRUCTION_EXAMPLES.map((ex) => (
+                    <label key={ex.id} className="flex items-start space-x-2 bg-neutral-700/50 rounded-md p-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-neutral-500 bg-neutral-800 text-neutral-100 focus:ring-0"
+                        checked={isInstructionSelected(ex.text)}
+                        onChange={() => toggleInstruction(ex.id)}
+                      />
+                      <div>
+                        <div className="text-sm text-white font-medium">{ex.category}</div>
+                        <div className="text-xs text-neutral-300">{ex.description}</div>
+                        <div className="text-xs text-neutral-400 italic mt-1">“{ex.text}”</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
               </div>
               <Textarea
                 placeholder="Example: 'Always mention when someone is shooting poorly', 'Diss the Lakers whenever possible', 'Get excited about defensive plays', 'Call out bad calls by refs'"

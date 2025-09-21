@@ -197,15 +197,6 @@ export default function ProfilePage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-neutral-300 mb-2">Team Name</label>
-                  <Textarea
-                    placeholder="e.g., Downtown Dimes"
-                    value={(prefs.fantasyInfo as any)?.teamName || ''}
-                    onChange={(e) => update({ fantasyInfo: { ...(prefs.fantasyInfo || {}), teamName: e.target.value } })}
-                    className="min-h-[44px] resize-none bg-neutral-700 border-neutral-600 text-white placeholder-neutral-400"
-                  />
-                </div>
               </div>
               <div>
                 <label className="block text-sm text-neutral-300 mb-2">Notes</label>

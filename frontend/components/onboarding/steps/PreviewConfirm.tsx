@@ -41,6 +41,22 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
     }
   };
 
+  const getLanguageLabel = (value?: string) => {
+    switch (value) {
+      case 'en': return 'English';
+      case 'es': return 'Spanish';
+      case 'fr': return 'French';
+      case 'de': return 'German';
+      case 'it': return 'Italian';
+      case 'pt': return 'Portuguese';
+      case 'hi': return 'Hindi';
+      case 'ja': return 'Japanese';
+      case 'ko': return 'Korean';
+      case 'zh': return 'Chinese';
+      default: return 'English';
+    }
+  };
+
   const getGenderLabel = (value: string) => {
     switch (value) {
       case 'male': return 'Male';
@@ -173,6 +189,10 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
                 </Button>
               </div>
               <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-neutral-400">Language:</span>
+                  <Badge variant="secondary">{getLanguageLabel(data.language)}</Badge>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-neutral-400">Gender:</span>
                   <Badge variant="secondary">{getGenderLabel(data.voiceGender)}</Badge>

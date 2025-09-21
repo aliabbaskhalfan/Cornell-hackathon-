@@ -117,6 +117,35 @@ export default function VoicePreferences({ data, updateData, onNext, onPrevious,
           </CardContent>
         </Card>
 
+        {/* Language */}
+        <Card className="bg-neutral-800 border-neutral-700">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-white">Language</h3>
+              <Select
+                value={data.language || 'en'}
+                onValueChange={(value) => handleSelectChange('language', value)}
+              >
+                <SelectTrigger className="w-full bg-neutral-700 border-neutral-600 text-white">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="es">Spanish</SelectItem>
+                  <SelectItem value="fr">French</SelectItem>
+                  <SelectItem value="de">German</SelectItem>
+                  <SelectItem value="it">Italian</SelectItem>
+                  <SelectItem value="pt">Portuguese</SelectItem>
+                  <SelectItem value="hi">Hindi</SelectItem>
+                  <SelectItem value="ja">Japanese</SelectItem>
+                  <SelectItem value="ko">Korean</SelectItem>
+                  <SelectItem value="zh">Chinese</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Accent/Style */}
         <Card className="bg-neutral-800 border-neutral-700">
           <CardContent className="p-6">

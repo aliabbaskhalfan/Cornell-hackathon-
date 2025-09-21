@@ -8,16 +8,19 @@ import { api } from '@/lib/api'
 export default function HomePage() {
   const router = useRouter()
 
-  const handleComplete = (data: OnboardingData) => {
-    // Clear the saved data from localStorage since onboarding is complete
-    localStorage.removeItem('onboarding-data')
-    
-    // Persist preferences to backend then redirect
-    api.saveUserPreferences(data)
-      .catch(() => {})
-      .finally(() => {
-        router.push('/dashboard')
-      })
+  const handleComplete = async (data: OnboardingData) => {
+    try {
+      const res = await api.saveUserPreferences(data)
+      if (res?.success) {
+        // Only clear cached onboarding data after a successful save
+        localStorage.removeItem('onboarding-data')
+      }
+    } catch (e) {
+      // Keep local data for retry if save fails
+    } finally {
+      // Navigate after save attempt completes to avoid race with dashboard check
+      router.push('/dashboard')
+    }
   };
 
   const handleSkip = () => {

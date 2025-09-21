@@ -28,7 +28,6 @@ export interface OnboardingData {
   backgroundAudio: boolean;
   fantasyInfo?: {
     league?: 'Yahoo' | 'ESPN' | 'Sleeper' | 'Other';
-    teamName?: string;
     notes?: string;
   };
 }

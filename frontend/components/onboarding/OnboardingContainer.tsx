@@ -52,6 +52,7 @@ const INITIAL_DATA: OnboardingData = {
   voiceSpeed: 50,
   accent: 'american',
   commentaryFrequency: 'key-moments',
+  language: 'en',
   customInstructions: '',
   liveQA: true,
   backgroundAudio: true,
