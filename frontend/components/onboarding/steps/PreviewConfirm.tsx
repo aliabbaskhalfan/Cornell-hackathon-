@@ -58,6 +58,15 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
     }
   };
 
+  const getGenderLabel = (value?: string) => {
+    switch (value) {
+      case 'male': return 'Male';
+      case 'female': return 'Female';
+      case 'no-preference': return 'No Preference';
+      default: return 'No Preference';
+    }
+  };
+
   // Only show items that differ from defaults (new selections in this session)
   const DEFAULTS = {
     favoriteTeam: null as any,
@@ -184,9 +193,19 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
               </CardContent>
             </Card>
           )}
-                </Button>
-              </div>
-              <div className="space-y-2">
+
+          {/* Commentary Style */}
+          {(energyChanged || comedyChanged || statChanged || biasChanged) && (
+            <Card className="bg-neutral-800 border-neutral-700">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-white">Commentary Style</h3>
+                  <Button variant="outline" size="sm" className="bg-neutral-700 border-neutral-600 text-white hover:bg-neutral-600" onClick={() => goToStep && goToStep(1)}>
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                </div>
+                <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm text-neutral-400">Energy:</span>
                   <Badge variant="secondary">
@@ -213,9 +232,10 @@ export default function PreviewConfirm({ data, updateData, onNext, onPrevious, i
                     </Badge>
                   </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Right Column */}
